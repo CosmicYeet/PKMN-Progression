@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Progression League — Pokémon TCG Rulebook</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Familjen+Grotesk:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#14172B;
+    --ink-2:#1D2138;
+    --paper:#F4ECD8;
+    --paper-line:#E4D8B8;
+    --red:#D53A3A;
+    --gold:#E7B93C;
+    --soft:#4B4F6B;
+    --soft-2:#6E7290;
+    --grass:#63BC5A; --fire:#E25441; --water:#4F9DE0;
+    --bolt:#F4D23C; --psy:#9E5CB5; --fight:#C77A3B;
+    --shadow:0 18px 40px -22px rgba(0,0,0,.55);
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0;background:var(--ink);color:var(--paper);
+    font-family:"Familjen Grotesk",system-ui,sans-serif;
+    font-size:17px;line-height:1.6;-webkit-font-smoothing:antialiased;
+    background-image:radial-gradient(circle at 18% -10%,rgba(213,58,58,.16),transparent 45%),radial-gradient(circle at 92% 4%,rgba(231,185,60,.12),transparent 40%);
+  }
+  .wrap{max-width:940px;margin:0 auto;padding:0 22px}
+  .mono{font-family:"Space Mono",monospace}
+
+  /* ---------- HERO ---------- */
+  header.hero{padding:78px 0 48px;position:relative}
+  .eyebrow{font-family:"Space Mono",monospace;font-size:13px;letter-spacing:.32em;text-transform:uppercase;color:var(--gold);margin:0 0 20px}
+  .eyebrow::before{content:"◆ ";color:var(--red)}
+  h1{
+    font-family:"Bricolage Grotesque",sans-serif;font-weight:800;
+    font-size:clamp(52px,11vw,112px);line-height:.9;margin:0;letter-spacing:-.02em;
+    background:linear-gradient(100deg,#F4ECD8 0%,#F4ECD8 30%,#8FE3FF 42%,#F4A6E8 52%,#FFD98A 62%,#F4ECD8 74%,#F4ECD8 100%);
+    background-size:220% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;
+    animation:holo 7s ease-in-out infinite;
+  }
+  @keyframes holo{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+  .subtitle{font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:clamp(20px,3.4vw,30px);margin:6px 0 0;color:var(--paper)}
+  .thesis{max-width:620px;margin:22px 0 0;color:#D9D2BE;font-size:19px}
+
+  .glance{
+    display:grid;grid-template-columns:repeat(4,1fr);gap:1px;margin:40px 0 0;
+    background:var(--paper-line);border:1px solid var(--paper-line);border-radius:10px;overflow:hidden;box-shadow:var(--shadow)
+  }
+  .glance div{background:var(--ink-2);padding:18px 16px}
+  .glance .k{font-family:"Space Mono",monospace;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--soft-2)}
+  .glance .v{font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:24px;margin-top:6px;color:var(--paper)}
+  .glance .v small{font-weight:400;font-size:13px;color:var(--gold);font-family:"Space Mono",monospace}
+  @media(max-width:640px){.glance{grid-template-columns:repeat(2,1fr)}}
+
+  /* ---------- SECTIONS ---------- */
+  section{padding:40px 0}
+  .sec-head{display:flex;align-items:baseline;gap:16px;margin:0 0 26px;border-bottom:1px solid rgba(244,236,216,.14);padding-bottom:14px}
+  .sec-no{font-family:"Space Mono",monospace;font-size:14px;color:var(--red);font-weight:700}
+  h2{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:clamp(26px,4.4vw,38px);margin:0;letter-spacing:-.01em}
+
+  .card{background:var(--paper);color:var(--ink);border-radius:12px;padding:26px 28px;box-shadow:var(--shadow)}
+  .card + .card{margin-top:16px}
+  .card h3{font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:20px;margin:0 0 8px;color:var(--ink)}
+  .card p{margin:0;color:#33374d}
+  .card p.note{margin-top:10px;font-size:15px;color:var(--soft)}
+
+  /* loop */
+  .loop{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+  @media(max-width:640px){.loop{grid-template-columns:1fr}}
+  .step{background:var(--paper);color:var(--ink);border-radius:12px;padding:22px 22px 20px;box-shadow:var(--shadow);position:relative;border-top:3px solid var(--red)}
+  .step .n{font-family:"Space Mono",monospace;font-weight:700;font-size:13px;color:var(--red);letter-spacing:.1em}
+  .step h3{font-family:"Bricolage Grotesque",sans-serif;font-size:19px;margin:8px 0 6px}
+  .step p{margin:0;font-size:15px;color:#3a3e55}
+
+  /* golden rule callout */
+  .golden{
+    background:linear-gradient(135deg,#1E2238,#191d31);border:1px solid var(--gold);
+    border-left:5px solid var(--gold);border-radius:12px;padding:26px 28px;box-shadow:var(--shadow)
+  }
+  .golden .tag{font-family:"Space Mono",monospace;font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--gold)}
+  .golden h3{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:26px;margin:8px 0 12px;color:var(--paper)}
+  .golden p{margin:0;color:#D9D2BE}
+  .golden .rule-pair{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:18px}
+  @media(max-width:560px){.golden .rule-pair{grid-template-columns:1fr}}
+  .golden .rule-pair div{background:rgba(244,236,216,.06);border-radius:9px;padding:14px 16px}
+  .golden .rule-pair .yes{color:var(--grass);font-family:"Space Mono",monospace;font-size:12px;letter-spacing:.1em}
+  .golden .rule-pair .no{color:var(--fire);font-family:"Space Mono",monospace;font-size:12px;letter-spacing:.1em}
+  .golden .rule-pair b{color:var(--paper);display:block;margin-top:4px;font-family:"Bricolage Grotesque",sans-serif}
+  .golden .rule-pair span{color:#C4BEAC;font-size:14px}
+
+  /* energy chips */
+  .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:18px}
+  .chip{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-family:"Space Mono",monospace;font-weight:700;font-size:13px;color:#14172B}
+
+  /* stat list */
+  .rules-list{list-style:none;margin:0;padding:0}
+  .rules-list li{display:flex;gap:16px;padding:15px 0;border-bottom:1px solid rgba(244,236,216,.12)}
+  .rules-list li:last-child{border-bottom:0}
+  .rules-list .lbl{font-family:"Space Mono",monospace;font-size:12px;color:var(--gold);letter-spacing:.08em;white-space:nowrap;min-width:112px;padding-top:2px;text-transform:uppercase}
+  .rules-list .txt{color:#E4DDC9}
+  .rules-list .txt b{color:var(--paper)}
+
+  /* season track */
+  .track{position:relative;margin:8px 0 0;padding-left:8px}
+  .era-label{font-family:"Space Mono",monospace;font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:var(--red);margin:26px 0 12px}
+  .era-label:first-child{margin-top:0}
+  .stop{display:grid;grid-template-columns:76px 1fr;gap:18px;align-items:center;padding:11px 0;position:relative}
+  .stop .yr{font-family:"Space Mono",monospace;font-size:13px;color:var(--soft-2);text-align:right}
+  .stop .set{font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:19px;position:relative;padding-left:26px}
+  .stop .set::before{content:"";position:absolute;left:0;top:50%;transform:translateY(-50%);width:11px;height:11px;border-radius:50%;background:var(--ink);border:2px solid var(--gold)}
+  .stop.start .set::before{background:var(--red);border-color:var(--red);box-shadow:0 0 0 4px rgba(213,58,58,.25)}
+  .stop.start .set{color:#fff}
+  .stop .set small{display:block;font-family:"Familjen Grotesk";font-weight:400;font-size:13px;color:var(--soft-2)}
+  .stop.skip .set{color:var(--soft-2);font-weight:600;font-size:16px}
+  .stop.skip .set::before{background:transparent;border-color:var(--soft);width:9px;height:9px}
+  .track::before{content:"";position:absolute;left:99px;top:14px;bottom:14px;width:2px;background:linear-gradient(var(--gold),rgba(231,185,60,.15))}
+  @media(max-width:560px){
+    .stop{grid-template-columns:60px 1fr;gap:12px}
+    .track::before{left:76px}
+  }
+  .flag{display:inline-block;font-family:"Space Mono",monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;background:var(--red);color:#fff;padding:2px 8px;border-radius:20px;margin-left:8px;vertical-align:middle}
+
+  /* season standings */
+  .points{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:4px}
+  @media(max-width:560px){.points{grid-template-columns:1fr}}
+  .pt{background:var(--paper);color:var(--ink);border-radius:12px;padding:20px;text-align:center;box-shadow:var(--shadow)}
+  .pt .big{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:42px;color:var(--red);line-height:1}
+  .pt .lbl{font-family:"Space Mono",monospace;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--soft);margin-top:8px}
+
+  /* ordered steps (TTS) */
+  ol.flow{counter-reset:s;list-style:none;margin:0;padding:0}
+  ol.flow li{counter-increment:s;position:relative;padding:0 0 20px 52px;color:#E4DDC9}
+  ol.flow li::before{content:counter(s);position:absolute;left:0;top:-2px;width:34px;height:34px;border-radius:8px;background:var(--ink-2);border:1px solid var(--gold);color:var(--gold);font-family:"Space Mono",monospace;font-weight:700;display:grid;place-items:center}
+  ol.flow li::after{content:"";position:absolute;left:17px;top:34px;bottom:2px;width:1px;background:rgba(231,185,60,.25)}
+  ol.flow li:last-child{padding-bottom:0}
+  ol.flow li:last-child::after{display:none}
+  ol.flow b{color:var(--paper)}
+
+  /* spice grid */
+  .spice{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+  @media(max-width:640px){.spice{grid-template-columns:1fr}}
+  .spice .card h3{display:flex;align-items:center;gap:10px}
+  .spice .card h3 span{font-size:14px}
+
+  footer{padding:56px 0 44px;border-top:1px solid rgba(244,236,216,.14);margin-top:24px;color:var(--soft-2);font-size:14px}
+  footer .mono{color:var(--soft-2)}
+  footer a{color:var(--gold);text-decoration:none}
+  .disc{font-size:12px;color:var(--soft);margin-top:20px;max-width:640px}
+
+  @media(prefers-reduced-motion:reduce){h1{animation:none}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <header class="hero">
+    <p class="eyebrow">Pokémon TCG · Chronological Draft League</p>
+    <h1>PROGRESSION<br>LEAGUE</h1>
+    <p class="subtitle">Open the past, one set at a time.</p>
+    <p class="thesis">Start at Base Set, 1999. Open packs, build from what you pull, and duel. Then add the next set chronologically, edit your deck, and battle again — watching your collection and your deck evolve across the eras.</p>
+
+    <div class="glance">
+      <div><div class="k">Trainers</div><div class="v">5+ <small>players</small></div></div>
+      <div><div class="k">Packs / Set</div><div class="v">18 <small>each</small></div></div>
+      <div><div class="k">Format</div><div class="v">Era <small>as-printed</small></div></div>
+      <div><div class="k">Arena</div><div class="v">TTS <small>tabletop sim</small></div></div>
+    </div>
+  </header>
+
+  <section id="loop">
+    <div class="sec-head"><span class="sec-no">01</span><h2>The Loop</h2></div>
+    <div class="loop">
+      <div class="step"><div class="n">STEP 01</div><h3>Crack the set</h3><p>Everyone opens the same 18 packs of the newest set in the sim — ideally live together. The pack-opening is half the night.</p></div>
+      <div class="step"><div class="n">STEP 02</div><h3>Grow your pool</h3><p>Add every card you pulled to your personal cumulative collection. It only ever grows — nothing is spent.</p></div>
+      <div class="step"><div class="n">STEP 03</div><h3>Rebuild the deck</h3><p>Construct a fresh 60-card deck from your <em>entire</em> pool, not just the new set. Full rebuilds allowed every session.</p></div>
+      <div class="step"><div class="n">STEP 04</div><h3>Duel</h3><p>Run the night's Swiss rounds in TTS. Log results to the season standings, then queue up the next set.</p></div>
+    </div>
+  </section>
+
+  <section id="energy">
+    <div class="sec-head"><span class="sec-no">02</span><h2>The Golden Rule</h2></div>
+    <div class="golden">
+      <p class="tag">Read this one first</p>
+      <h3>Basic Energy is free. Special Energy is pulled.</h3>
+      <p>A 60-card deck needs 12–20 Energy. If you could only run the Energy you opened, decks would be unplayable for the first month. So basic Energy sits outside the pool entirely — and in TTS you just spawn it from the card database. Everything else you play must come from cards you actually pulled.</p>
+      <div class="rule-pair">
+        <div><div class="yes">// UNLIMITED</div><b>Basic Energy</b><span>Grass, Fire, Water, Lightning, Psychic, Fighting, Metal, Darkness. Add as many as you like.</span></div>
+        <div><div class="no">// PULL IT</div><b>Special Energy</b><span>Double Colorless, Rainbow, and any other named Energy count toward your pool like any card.</span></div>
+      </div>
+      <div class="chips">
+        <span class="chip" style="background:var(--grass)">G</span>
+        <span class="chip" style="background:var(--fire)">R</span>
+        <span class="chip" style="background:var(--water)">W</span>
+        <span class="chip" style="background:var(--bolt)">L</span>
+        <span class="chip" style="background:var(--psy);color:#fff">P</span>
+        <span class="chip" style="background:var(--fight)">F</span>
+      </div>
+    </div>
+  </section>
+
+  <section id="deck">
+    <div class="sec-head"><span class="sec-no">03</span><h2>Deckbuilding</h2></div>
+    <div class="card">
+      <ul class="rules-list">
+        <li><span class="lbl">Deck size</span><span class="txt"><b>Exactly 60 cards.</b> Free basic Energy conveniently fills the gap when your early pool is thin.</span></li>
+        <li><span class="lbl">Copy limit</span><span class="txt"><b>Max 4 of any card</b> (basic Energy exempt). You run only the copies you actually pulled.</span></li>
+        <li><span class="lbl">Basics</span><span class="txt">At least <b>one Basic Pokémon</b> — realistically several. Thin Basic counts mean brutal mulligans, which is a real early-game tension.</span></li>
+        <li><span class="lbl">Rebuild</span><span class="txt"><b>Full teardown allowed</b> every session from your whole cumulative pool. Chase a new archetype whenever a set unlocks it.</span></li>
+        <li><span class="lbl">Bans</span><span class="txt"><b>Start with none.</b> A limited pool can't easily assemble the degenerate Unlimited combos. The Commissioner adds restrictions only if something dominates.</span></li>
+      </ul>
+    </div>
+  </section>
+
+  <section id="battle">
+    <div class="sec-head"><span class="sec-no">04</span><h2>Battle Rules</h2></div>
+    <div class="card">
+      <ul class="rules-list">
+        <li><span class="lbl">As printed</span><span class="txt">Play cards by their <b>era's text</b> — in Base–Neo, Weakness <b>doubles</b> damage (×2, not +30) and Trainers have <b>no once-per-turn limit</b>.</span></li>
+        <li><span class="lbl">Turn 1</span><span class="txt">House rule for fairness: the player going first <b>doesn't draw and can't attack</b> on their first turn.</span></li>
+        <li><span class="lbl">Win by</span><span class="txt">Take all <b>6 Prizes</b>, leave the opponent with <b>no Pokémon in play</b>, or <b>deck them out</b> at the start of their turn.</span></li>
+        <li><span class="lbl">Match</span><span class="txt"><b>Best of one</b> per Swiss pairing to keep nights moving. Bump to Bo3 for the era-championship finale.</span></li>
+      </ul>
+    </div>
+  </section>
+
+  <section id="track">
+    <div class="sec-head"><span class="sec-no">05</span><h2>The Season Track</h2></div>
+    <div class="track">
+      <p class="era-label">Wizards Era — The Foundation</p>
+      <div class="stop start"><div class="yr">Jan '99</div><div class="set">Base Set <span class="flag">Kickoff</span><small>Where every collection begins</small></div></div>
+      <div class="stop"><div class="yr">Jun '99</div><div class="set">Jungle</div></div>
+      <div class="stop"><div class="yr">Oct '99</div><div class="set">Fossil</div></div>
+      <div class="stop skip"><div class="yr">— '00</div><div class="set">Base Set 2 &nbsp;·&nbsp; skipped (reprints)</div></div>
+      <div class="stop"><div class="yr">Apr '00</div><div class="set">Team Rocket</div></div>
+      <div class="stop"><div class="yr">Aug '00</div><div class="set">Gym Heroes</div></div>
+      <div class="stop"><div class="yr">Oct '00</div><div class="set">Gym Challenge</div></div>
+
+      <p class="era-label">Neo Era — New Types Arrive</p>
+      <div class="stop"><div class="yr">Dec '00</div><div class="set">Neo Genesis<small>Darkness &amp; Metal energy debut</small></div></div>
+      <div class="stop"><div class="yr">Jun '01</div><div class="set">Neo Discovery</div></div>
+      <div class="stop"><div class="yr">Sep '01</div><div class="set">Neo Revelation</div></div>
+      <div class="stop"><div class="yr">Feb '02</div><div class="set">Neo Destiny<small>Shining Pokémon — the era's white whales</small></div></div>
+
+      <p class="era-label">e-Card Era — The Wizards Farewell</p>
+      <div class="stop"><div class="yr">Sep '02</div><div class="set">Expedition</div></div>
+      <div class="stop skip"><div class="yr">— '02</div><div class="set">Legendary Collection &nbsp;·&nbsp; skipped (reprints)</div></div>
+      <div class="stop"><div class="yr">Jan '03</div><div class="set">Aquapolis</div></div>
+      <div class="stop"><div class="yr">May '03</div><div class="set">Skyridge<small>Crystal-type chase cards</small></div></div>
+
+      <p class="era-label">→ EX Era Begins (stretch goal)</p>
+      <div class="stop"><div class="yr">Jul '03</div><div class="set">EX Ruby &amp; Sapphire<small>Pokémon-ex, Supporters, a whole new power level</small></div></div>
+    </div>
+  </section>
+
+  <section id="season">
+    <div class="sec-head"><span class="sec-no">06</span><h2>The Season</h2></div>
+    <div class="card">
+      <h3>Swiss rounds, points that carry</h3>
+      <p>With a full table, a round-robin is too many games. Each night, run <b>3 Swiss rounds</b> — pair players by current record so games stay competitive. Points accumulate across the entire series into a running leaderboard.</p>
+      <p class="note">Miss a night? No problem — Swiss + cumulative points means the league survives uneven attendance. Latecomers just start further down the board.</p>
+    </div>
+    <div class="points">
+      <div class="pt"><div class="big">3</div><div class="lbl">Win</div></div>
+      <div class="pt"><div class="big">1</div><div class="lbl">Tie</div></div>
+      <div class="pt"><div class="big">0</div><div class="lbl">Loss</div></div>
+    </div>
+    <div class="card" style="margin-top:16px">
+      <h3>Era Championships</h3>
+      <p>At the close of each era on the Season Track — Wizards, Neo, e-Card — the <b>top two on points play a Bo3 final</b> for that era's title. Reset nothing; points roll onward. Win the most era titles and you take the overall crown when the series ends.</p>
+    </div>
+  </section>
+
+  <section id="tts">
+    <div class="sec-head"><span class="sec-no">07</span><h2>Tabletop Simulator Setup</h2></div>
+    <div class="card">
+      <ol class="flow">
+        <li>In the sim, select the newest set, set quantity to <b>18</b>, and Draft or Auto&nbsp;Open. Then hit <b>Export → TTS</b>.</li>
+        <li>In Tabletop Simulator, load a maintained Pokémon TCG mod — <b>Pepperoni's table</b> is the actively-updated one with the full old-card database and a decklist-import tablet.</li>
+        <li>Keep one <b>saved object as your personal collection</b>. Each session, add the packs you just exported to it — that's your growing pool.</li>
+        <li>Build your <b>60-card deck</b> from your collection, spawning unlimited <b>basic Energy</b> straight from the mod's database.</li>
+        <li>Sit in your player color, set up, and duel. Save your deck as an object so next session you can tweak instead of rebuild from scratch.</li>
+      </ol>
+      <p class="note">Lighter alternatives if TTS is fussy for someone: the sim's own on-site <b>Play</b> table, or the browser-based <b>ptcgsim.online</b>. But TTS gives the fullest control over these old cards.</p>
+    </div>
+  </section>
+
+  <section id="spice">
+    <div class="sec-head"><span class="sec-no">08</span><h2>Optional Spice</h2></div>
+    <div class="spice">
+      <div class="card"><h3><span>🔁</span> Trading Window</h3><p>Open a trade phase between sessions. Cross-collection deals add a negotiation layer the source material never had — and help everyone's decks come online.</p></div>
+      <div class="card"><h3><span>🏆</span> Pull of the Night</h3><p>Each era has a white whale: 1st-edition holos, Neo Destiny Shinings, e-Card Crystals. Vote a best-pull each session for pure bragging rights.</p></div>
+      <div class="card"><h3><span>⚖️</span> Rubber-Band Handicap</h3><p>Optional constraint nights for whoever's running away with the season — mono-type only, or "no rares." Keeps the back of the pack in it.</p></div>
+      <div class="card"><h3><span>📋</span> The Commissioner</h3><p>Appoint one person to arbitrate rules, hold the (initially empty) banlist, and keep the standings sheet. Rotate the role by era if you like.</p></div>
+    </div>
+  </section>
+
+  <footer>
+    <p class="mono">PROGRESSION LEAGUE · a homebrew Pokémon TCG format · v1.0</p>
+    <p>Simulator: <a href="https://pokemoncard.io/pack-sim">pokemoncard.io/pack-sim</a> &nbsp;·&nbsp; Arena: Tabletop Simulator</p>
+    <p class="disc">This is a fan-made house-rules document for private play. Not produced by, endorsed by, or affiliated with Nintendo, The Pokémon Company International, or GAME FREAK. All set names and card properties belong to their respective owners.</p>
+  </footer>
+
+</div>
+</body>
+</html>
