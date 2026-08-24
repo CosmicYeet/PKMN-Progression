@@ -242,7 +242,7 @@ footer p{margin:6px 0}
   <header class="pagehead">
     <p class="eyebrow">Season · Live from Sheets</p>
     <h1 class="pagetitle">Standings</h1>
-    <p class="thesis">Cumulative match points across the whole progression. Win = <b>3</b>, loss = <b>0</b>. Pulled live from the league spreadsheet.</p>
+    <p class="thesis">Cumulative match points across the whole progression. <b>2&ndash;0 = 3 pts</b>, <b>2&ndash;1 = 2 pts</b>, <b>1&ndash;2 = 1 pt</b>, and <b>0&ndash;2 = 0 pts</b>. Pulled live from the league spreadsheet.</p>
     <p class="current-set">Current set: <span id="curset">…</span> <button id="refresh" class="refresh">&#8635; Refresh</button></p>
   </header>
 
@@ -251,7 +251,7 @@ footer p{margin:6px 0}
       <thead><tr><th>#</th><th>Trainer</th><th class="num">Played</th><th class="num">Won</th><th class="num">Lost</th><th class="num">Pts</th></tr></thead>
       <tbody id="board"><tr><td colspan="6" class="empty">Loading…</td></tr></tbody>
     </table>
-    <p class="note tie-note">Tiebreak on equal points: more wins, then fewer losses. Played and Pts fill in automatically from Won/Lost if you leave those columns blank.</p>
+    <p class="note tie-note">Tiebreak on equal points: more match wins, then fewer match losses. Played fills automatically from Won/Lost if blank. Enter Pts in the sheet using the match score above.</p>
     <p class="synced" id="synced"></p>
   </section>
 
@@ -337,7 +337,7 @@ async function load(){
     const list=data.map(r=>{
       const won=num(r[ix.won]), lost=num(r[ix.lost]);
       const played=(ix.played!=null&&(''+(r[ix.played]||'')).trim()!==''&&!isNaN(+r[ix.played]))?+r[ix.played]:won+lost;
-      const pts=(ix.pts!=null&&(''+(r[ix.pts]||'')).trim()!==''&&!isNaN(+r[ix.pts]))?+r[ix.pts]:won*3;
+      const pts=(ix.pts!=null&&(''+(r[ix.pts]||'')).trim()!==''&&!isNaN(+r[ix.pts]))?+r[ix.pts]:0;
       return {name:(r[ix.player]||'').trim(),won,lost,played,pts};
     }).sort((a,b)=>b.pts-a.pts||b.won-a.won||a.lost-b.lost||a.name.localeCompare(b.name));
     board.innerHTML = list.length ? list.map((p,i)=>`<tr class="${i===0&&p.pts>0?'leader':''}"><td class="rank">${i+1}</td><td class="name">${esc(p.name)}</td><td class="num">${p.played}</td><td class="num">${p.won}</td><td class="num">${p.lost}</td><td class="pts">${p.pts}</td></tr>`).join('') : `<tr><td colspan="6" class="empty">No trainers in the sheet yet.</td></tr>`;
