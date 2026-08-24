@@ -25,6 +25,9 @@ h1{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:clamp(
 .weekhead{background:var(--ink-2);color:var(--paper);padding:16px 20px;display:flex;align-items:baseline;justify-content:space-between;gap:12px}.weekhead h2{font-family:"Bricolage Grotesque",sans-serif;font-size:24px;margin:0}.weekhead span{font-family:"Space Mono",monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--gold)}
 .pairings{padding:6px 20px 12px}.pairing{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid var(--paper-line)}.pairing:last-child{border-bottom:0}.player{font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:17px}.player:last-child{text-align:right}.vs{font-family:"Space Mono",monospace;font-size:10px;color:var(--red);font-weight:700}
 .empty{grid-column:1/-1;background:var(--paper);color:var(--soft);border-radius:12px;padding:26px;font-family:"Space Mono",monospace;font-size:13px}
+.tournament{padding:18px 0 54px}.tour-head{border-top:1px solid rgba(244,236,216,.14);padding-top:42px;margin-bottom:24px}.tour-kicker{font-family:"Space Mono",monospace;font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);margin:0 0 8px}.tour-head h2{font-family:"Bricolage Grotesque",sans-serif;font-size:clamp(32px,6vw,52px);line-height:1;margin:0}.tour-head p{color:#D9D2BE;max-width:680px;margin:14px 0 0}
+.bracket{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;align-items:start}.round{display:grid;gap:14px}.round-title{font-family:"Space Mono",monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin:0 0 2px}.match{background:var(--paper);color:var(--ink);border-radius:11px;overflow:hidden;box-shadow:var(--shadow)}.match-label{display:flex;justify-content:space-between;gap:10px;background:var(--ink-2);color:var(--soft-2);padding:7px 12px;font-family:"Space Mono",monospace;font-size:9px;letter-spacing:.08em;text-transform:uppercase}.match-label b{color:var(--gold)}.slot{display:flex;align-items:center;gap:9px;padding:11px 12px;border-bottom:1px solid var(--paper-line)}.slot:last-child{border-bottom:0}.seed{display:grid;place-items:center;width:23px;height:23px;border-radius:50%;background:var(--ink-2);color:var(--gold);font-family:"Space Mono",monospace;font-size:10px;font-weight:700;flex:none}.slot-name{font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:15px}.placeholder{color:var(--soft);font-weight:600}.bye{font-family:"Space Mono",monospace;font-size:9px;color:var(--red);margin-left:auto;text-transform:uppercase;letter-spacing:.08em}
+@media(max-width:760px){.bracket{grid-template-columns:1fr}.round{margin-bottom:8px}}
 footer{padding:44px 0;border-top:1px solid rgba(244,236,216,.14);color:var(--soft-2);font-size:14px}footer a{color:var(--gold);text-decoration:none}.mono{font-family:"Space Mono",monospace}.disc{font-size:12px;color:var(--soft);max-width:660px}
 @media(max-width:680px){.schedule{grid-template-columns:1fr}.topnav .inner{align-items:flex-start}.navlinks{width:100%}.navlinks a{padding-left:7px;padding-right:7px}}
 </style>
@@ -42,6 +45,14 @@ footer{padding:44px 0;border-top:1px solid rgba(244,236,216,.14);color:var(--sof
 <div class="syncrow"><span class="synced" id="synced">Loading…</span><button id="refresh" class="refresh" type="button">↻ Refresh</button></div>
 </header>
 <main id="schedule" class="schedule"><p class="empty">Loading schedule…</p></main>
+<section class="tournament">
+  <div class="tour-head">
+    <p class="tour-kicker">End of the Wizards Era</p>
+    <h2>Era Tournament</h2>
+    <p>Six-player, single-elimination bracket seeded from the current standings. Every matchup is best of three; seeds 1 and 2 earn first-round byes.</p>
+  </div>
+  <div id="bracket" class="bracket"><p class="empty">Loading current seeds…</p></div>
+</section>
 </div>
 <script>
 const SHEET_ID='1EfbocEaH9PvIiHBsTHhLjDv0tE6GWs_dkBI17VkGmIs';
@@ -57,14 +68,55 @@ function parseCSV(t){
   if(cur!==''||row.length){row.push(cur);rows.push(row);}return rows;
 }
 function esc(s){return (s==null?'':String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+function num(v){v=(v==null?'':String(v)).trim();return v===''||isNaN(Number(v))?0:Number(v)}
+function seededPlayers(rows){
+  const headers=(rows[0]||[]).map(h=>(h||'').trim().toLowerCase());
+  const ix={};headers.forEach((h,i)=>ix[h]=i);
+  return rows.slice(1).filter(r=>ix.player!=null&&(r[ix.player]||'').trim()).map(r=>{
+    const won=num(r[ix.won]),lost=num(r[ix.lost]);
+    const ptsIndex=ix.pts!=null?ix.pts:ix.points;
+    return{name:(r[ix.player]||'').trim(),won,lost,pts:ptsIndex==null?0:num(r[ptsIndex])};
+  }).sort((a,b)=>b.pts-a.pts||b.won-a.won||a.lost-b.lost||a.name.localeCompare(b.name));
+}
+function playerSlot(player,seed,bye=false){
+  return `<div class="slot"><span class="seed">${seed}</span><span class="slot-name">${esc(player.name)}</span>${bye?'<span class="bye">Bye</span>':''}</div>`;
+}
+function waitingSlot(text){
+  return `<div class="slot"><span class="seed">—</span><span class="slot-name placeholder">${esc(text)}</span></div>`;
+}
+function renderBracket(players){
+  const el=document.getElementById('bracket');
+  if(players.length<6){el.innerHTML='<p class="empty">The bracket will appear once six trainers are listed in Standings.</p>';return;}
+  const p=players.slice(0,6);
+  el.innerHTML=`
+    <div class="round">
+      <p class="round-title">Opening Round</p>
+      <div class="match"><div class="match-label"><span>Match A</span><b>Best of 3</b></div>${playerSlot(p[2],3)}${playerSlot(p[5],6)}</div>
+      <div class="match"><div class="match-label"><span>Match B</span><b>Best of 3</b></div>${playerSlot(p[3],4)}${playerSlot(p[4],5)}</div>
+    </div>
+    <div class="round">
+      <p class="round-title">Semifinals</p>
+      <div class="match"><div class="match-label"><span>Semifinal A</span><b>Best of 3</b></div>${playerSlot(p[0],1,true)}${waitingSlot('Winner of Match B')}</div>
+      <div class="match"><div class="match-label"><span>Semifinal B</span><b>Best of 3</b></div>${playerSlot(p[1],2,true)}${waitingSlot('Winner of Match A')}</div>
+    </div>
+    <div class="round">
+      <p class="round-title">Championship</p>
+      <div class="match"><div class="match-label"><span>Era Final</span><b>Best of 3</b></div>${waitingSlot('Winner of Semifinal A')}${waitingSlot('Winner of Semifinal B')}</div>
+    </div>`;
+}
 async function load(){
   const el=document.getElementById('schedule'),sync=document.getElementById('synced');
+  const bracket=document.getElementById('bracket');
   sync.textContent='Refreshing…';
   try{
-    const url='https://docs.google.com/spreadsheets/d/'+SHEET_ID+'/gviz/tq?tqx=out:csv&headers=1&sheet=Rotation&range=E:G&_='+Date.now();
-    const res=await fetch(url,{cache:'no-store'});
-    if(!res.ok)throw new Error('Sheet request failed');
-    const rows=parseCSV(await res.text()).slice(1);
+    const base='https://docs.google.com/spreadsheets/d/'+SHEET_ID+'/gviz/tq?tqx=out:csv&headers=1';
+    const [rotationRes,standingsRes]=await Promise.all([
+      fetch(base+'&sheet=Rotation&range=E:G&_='+Date.now(),{cache:'no-store'}),
+      fetch(base+'&sheet=Standings&_='+Date.now(),{cache:'no-store'})
+    ]);
+    if(!rotationRes.ok||!standingsRes.ok)throw new Error('Sheet request failed');
+    const rows=parseCSV(await rotationRes.text()).slice(1);
+    const standingsRows=parseCSV(await standingsRes.text());
     const weeks=new Map();
     for(const row of rows){
       const week=(row[0]||'').trim(),p1=(row[1]||'').trim(),p2=(row[2]||'').trim();
@@ -78,9 +130,11 @@ async function load(){
     });
     if(!ordered.length){el.innerHTML='<p class="empty">No pairings found. Add week numbers in Column E and player names in Columns F and G on the Rotation sheet.</p>';}
     else{el.innerHTML=ordered.map(([week,games])=>`<section class="week"><div class="weekhead"><h2>Week ${esc(week)}</h2><span>${games.length} matchup${games.length===1?'':'s'}</span></div><div class="pairings">${games.map(g=>`<div class="pairing"><span class="player">${esc(g.p1)}</span><span class="vs">VS</span><span class="player">${esc(g.p2)}</span></div>`).join('')}</div></section>`).join('');}
+    renderBracket(seededPlayers(standingsRows));
     sync.textContent='Synced '+new Date().toLocaleTimeString()+' · auto-refreshes every 30s';
   }catch(e){
     el.innerHTML='<p class="empty">Could not load the Rotation sheet. Make sure the spreadsheet is shared for viewing and the tab is named “Rotation”.</p>';
+    bracket.innerHTML='<p class="empty">Could not load current tournament seeds.</p>';
     sync.textContent='Sync failed';
   }
 }
