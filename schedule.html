@@ -49,7 +49,7 @@ footer{padding:44px 0;border-top:1px solid rgba(244,236,216,.14);color:var(--sof
   <div class="tour-head">
     <p class="tour-kicker">End of the Wizards Era</p>
     <h2>Era Tournament</h2>
-    <p>Six-player, single-elimination bracket seeded from the current standings. Every matchup is best of three; seeds 1 and 2 earn first-round byes.</p>
+    <p>Eight-player, single-elimination bracket seeded from the current standings. Every matchup is best of three, beginning with four quarterfinals.</p>
   </div>
   <div id="bracket" class="bracket"><p class="empty">Loading current seeds…</p></div>
 </section>
@@ -106,18 +106,20 @@ function waitingSlot(text){
 }
 function renderBracket(players){
   const el=document.getElementById('bracket');
-  if(players.length<6){el.innerHTML='<p class="empty">The bracket will appear once six trainers are listed in Standings.</p>';return;}
-  const p=players.slice(0,6);
+  if(players.length<8){el.innerHTML='<p class="empty">The bracket will appear once eight trainers are listed in Standings.</p>';return;}
+  const p=players.slice(0,8);
   el.innerHTML=`
     <div class="round">
-      <p class="round-title">Opening Round</p>
-      <div class="match"><div class="match-label"><span>Match A</span><b>Best of 3</b></div>${playerSlot(p[2],3)}${playerSlot(p[5],6)}</div>
+      <p class="round-title">Quarterfinals</p>
+      <div class="match"><div class="match-label"><span>Match A</span><b>Best of 3</b></div>${playerSlot(p[0],1)}${playerSlot(p[7],8)}</div>
       <div class="match"><div class="match-label"><span>Match B</span><b>Best of 3</b></div>${playerSlot(p[3],4)}${playerSlot(p[4],5)}</div>
+      <div class="match"><div class="match-label"><span>Match C</span><b>Best of 3</b></div>${playerSlot(p[1],2)}${playerSlot(p[6],7)}</div>
+      <div class="match"><div class="match-label"><span>Match D</span><b>Best of 3</b></div>${playerSlot(p[2],3)}${playerSlot(p[5],6)}</div>
     </div>
     <div class="round">
       <p class="round-title">Semifinals</p>
-      <div class="match"><div class="match-label"><span>Semifinal A</span><b>Best of 3</b></div>${playerSlot(p[0],1,true)}${waitingSlot('Winner of Match B')}</div>
-      <div class="match"><div class="match-label"><span>Semifinal B</span><b>Best of 3</b></div>${playerSlot(p[1],2,true)}${waitingSlot('Winner of Match A')}</div>
+      <div class="match"><div class="match-label"><span>Semifinal A</span><b>Best of 3</b></div>${waitingSlot('Winner of Match A')}${waitingSlot('Winner of Match B')}</div>
+      <div class="match"><div class="match-label"><span>Semifinal B</span><b>Best of 3</b></div>${waitingSlot('Winner of Match C')}${waitingSlot('Winner of Match D')}</div>
     </div>
     <div class="round">
       <p class="round-title">Championship</p>
