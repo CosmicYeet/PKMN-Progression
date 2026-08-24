@@ -244,44 +244,36 @@ footer p{margin:6px 0}
   <header class="pagehead">
     <p class="eyebrow">The Vault · Anti-cheat</p>
     <h1 class="pagetitle">Card Pools</h1>
-    <p class="thesis">The single source of truth for what everyone owns. Open a trainer to see their whole collection &mdash; every card they've pulled across all sessions, with a running copy count. If a card isn't here, it can't be in their deck.</p>
+    <p class="thesis">Open a trainer to see their whole collection &mdash; every card pulled across all sessions, with a running copy count. Each share link is fetched once and cached, so it stays fast as the league grows.</p>
     <p class="current-set">Current set: <span id="curset">…</span> <button id="refresh" class="refresh">&#8635; Refresh</button></p>
   </header>
-
   <section>
     <div class="card howto">
       <h3>How to log your pulls</h3>
       <ol class="flow">
-        <li>Right after opening, click <b>Share your Pulls &rarr; Copy Link</b> in the sim &mdash; a permanent snapshot of that session's pulls.</li>
-        <li>Drop the link where your group collects them (a Discord channel works well), tagged with your name and the set.</li>
-        <li>The Commissioner pastes each link into the league <b>Google Sheet</b> &mdash; the player's row, the column for that set. This page reads it live and renders the cards.</li>
+        <li>Right after opening, click <b>Share your Pulls &rarr; Copy Link</b> in the sim.</li>
+        <li>Drop the link where your group collects them (Discord works), tagged with name and set.</li>
+        <li>The Commissioner pastes each link into the league <b>Google Sheet</b> &mdash; player's row, the set's column. New links are fetched &amp; cached the first time someone opens that trainer.</li>
       </ol>
-      <p class="note">Cards load from the share links when you open a trainer, so the first open takes a moment. Counts are summed across every session that player has logged.</p>
     </div>
+    <p id="proxymode"></p>
   </section>
-
   <section>
     <div class="sec-head"><span class="sec-no">&#9670;</span><h2>The Trainers</h2></div>
     <div id="pools"><p class="empty2">Loading…</p></div>
   </section>
 </div>
-
 <script>
-/* ===== Paste your Google Sheet ID between the quotes (see setup notes). ===== */
 const SHEET_ID = "1EfbocEaH9PvIiHBsTHhLjDv0tE6GWs_dkBI17VkGmIs";
-/* Optional but recommended for reliable card images: your Apps Script proxy /exec URL
-   (see cors-proxy.gs). Leave "" to use public proxies only. */
 const PROXY_URL = "https://script.google.com/macros/s/AKfycbwKB-ftfegK8vgvPeHoRoaMjHZQLAx9cK1cAC8BPcc5432ARZMJXOlaWq1buSIqruWx/exec";
 
 function parseCSV(t){
   const rows=[]; let row=[], cur='', q=false;
   for(let i=0;i<t.length;i++){ const c=t[i];
     if(q){ if(c==='"'){ if(t[i+1]==='"'){cur+='"';i++;} else {q=false;} } else cur+=c; }
-    else if(c==='"'){ q=true; }
-    else if(c===','){ row.push(cur); cur=''; }
+    else if(c==='"'){ q=true; } else if(c===','){ row.push(cur); cur=''; }
     else if(c==='\n'){ row.push(cur); rows.push(row); row=[]; cur=''; }
-    else if(c==='\r'){}
-    else cur+=c;
+    else if(c==='\r'){} else cur+=c;
   }
   if(cur!==''||row.length){ row.push(cur); rows.push(row); }
   return rows;
@@ -293,54 +285,73 @@ function gviz(tab){
 function esc(s){ return (s==null?'':(''+s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function num(v){ v=(v==null?'':(''+v)).trim(); return (v===''||isNaN(+v))?0:+v; }
 
-/* fetch a pokemoncard.io share page: your Apps Script proxy first (if set),
-   then public proxies, each with a hard timeout so a dead one can't hang us. */
+function jsonp(url){
+  return new Promise((resolve,reject)=>{
+    const cb='__pl_'+Math.random().toString(36).slice(2);
+    const s=document.createElement('script'); let done=false;
+    window[cb]=d=>{ done=true; cleanup(); resolve(d); };
+    function cleanup(){ try{delete window[cb];}catch(e){window[cb]=undefined;} if(s.parentNode)s.parentNode.removeChild(s); }
+    s.onerror=()=>{ if(!done){ cleanup(); reject(new Error('jsonp error')); } };
+    s.src=url+(url.indexOf('?')>-1?'&':'?')+'callback='+cb;
+    document.head.appendChild(s);
+    setTimeout(()=>{ if(!done){ cleanup(); reject(new Error('jsonp timeout')); } },30000);
+  });
+}
 async function fetchShare(url){
-  const builders=[];
   if(typeof PROXY_URL!=='undefined' && PROXY_URL){
-    builders.push({u:x=>PROXY_URL+(PROXY_URL.indexOf('?')>-1?'&':'?')+'url='+encodeURIComponent(x)});
+    try{ const html=await jsonp(PROXY_URL+'?url='+encodeURIComponent(url)); if(html && html.indexOf('images.pokemoncard.io')>-1) return html; }catch(e){}
   }
-  builders.push({u:x=>'https://api.codetabs.com/v1/proxy/?quest='+encodeURIComponent(x)});
-  builders.push({u:x=>'https://api.allorigins.win/raw?url='+encodeURIComponent(x)});
-  builders.push({u:x=>'https://api.allorigins.win/get?url='+encodeURIComponent(x), json:true});
-  builders.push({u:x=>'https://corsproxy.io/?url='+encodeURIComponent(x)});
-  for(const b of builders){
-    try{
-      const ctrl=new AbortController(); const to=setTimeout(()=>ctrl.abort(),9000);
-      const r=await fetch(b.u(url),{cache:'no-store',signal:ctrl.signal});
-      clearTimeout(to);
-      if(!r.ok) continue;
-      let t=await r.text();
-      if(b.json){ try{ t=(JSON.parse(t).contents)||''; }catch(e){ continue; } }
-      if(t && t.indexOf('images.pokemoncard.io')>-1) return t;
+  const builders=[
+    x=>'https://api.codetabs.com/v1/proxy/?quest='+encodeURIComponent(x),
+    x=>'https://api.allorigins.win/raw?url='+encodeURIComponent(x)
+  ];
+  for(const bld of builders){
+    try{ const ctrl=new AbortController(); const to=setTimeout(()=>ctrl.abort(),9000);
+      const r=await fetch(bld(url),{cache:'no-store',signal:ctrl.signal}); clearTimeout(to);
+      if(!r.ok) continue; const t=await r.text(); if(t && t.indexOf('images.pokemoncard.io')>-1) return t;
     }catch(e){}
   }
-  throw new Error('all proxies failed');
+  throw new Error('all sources failed');
 }
+/* returns compact "id:count" list, e.g. "base1-1:2,base1-6:1" */
 function parseShare(html){
   const doc=new DOMParser().parseFromString(html,'text/html');
   const cards=[];
   doc.querySelectorAll('a[href*="/card/"]').forEach(a=>{
     const img=a.querySelector('img'); if(!img) return;
-    const src=img.getAttribute('src')||''; if(src.indexOf('images.pokemoncard.io')<0) return;
+    const src=img.getAttribute('src')||'';
+    const m=src.match(/\/images\/([^/]+)\/([^/?#]+)\.png/i); if(!m) return;
     const count=parseInt(((a.textContent||'').match(/\d+/)||['1'])[0])||1;
-    let href=a.getAttribute('href')||'';
-    if(href && !/^https?:/.test(href)) href='https://pokemoncard.io'+href;
-    const m=src.match(/images\/([^/]+)\/[^/]+?-(\d+)\.png/);
-    cards.push({img:src, count, title:a.getAttribute('title')||img.getAttribute('alt')||'', href,
-                code:m?m[1]:'zzz', num:m?parseInt(m[2]):9999});
+    cards.push({id:m[2], count});
   });
   return cards;
 }
+function toCompact(cards){ return cards.map(c=>c.id+':'+c.count).join(','); }
+function imgFor(id){ const d=id.indexOf('-'); const code=d>0?id.slice(0,d):id; return 'https://images.pokemoncard.io/images/'+code+'/'+id+'.png'; }
 
-let ROSTER=[];
+let ROSTER=[], CACHE={};
+const LKEY='pl_cache_v1';
+function loadLocal(){ try{ return JSON.parse(localStorage.getItem(LKEY)||'{}'); }catch(e){ return {}; } }
+function saveLocal(){ try{ localStorage.setItem(LKEY, JSON.stringify(CACHE)); }catch(e){} }
+function saveToSheet(url,compact){
+  if(!PROXY_URL) return;
+  const s=document.createElement('script'), cb='__sv_'+Math.random().toString(36).slice(2);
+  const done=()=>{ try{delete window[cb];}catch(e){} if(s.parentNode)s.parentNode.removeChild(s); };
+  window[cb]=done; s.onerror=done;
+  s.src=PROXY_URL+'?save='+encodeURIComponent(url)+'&cards='+encodeURIComponent(compact)+'&callback='+cb;
+  document.head.appendChild(s);
+}
 async function load(){
-  const grid=document.getElementById('pools');
-  const csEl=document.getElementById('curset');
+  const grid=document.getElementById('pools'), csEl=document.getElementById('curset'), modeEl=document.getElementById('proxymode');
+  modeEl.innerHTML = PROXY_URL ? '' : `<span class="fallback">Set <b>PROXY_URL</b> (see cors-proxy.gs) so card images load reliably.</span>`;
   if(SHEET_ID==="PASTE_YOUR_SHEET_ID_HERE"){ grid.innerHTML=`<p class="empty2">Paste your Google Sheet ID at the top of this file to go live.</p>`; return; }
   grid.innerHTML=`<p class="empty2">Loading…</p>`;
+  CACHE=loadLocal();
   try{
-    const [rows,srows]=await Promise.all([gviz('Standings'),gviz('Settings')]);
+    const tasks=[gviz('Standings'),gviz('Settings')];
+    const [rows,srows]=await Promise.all(tasks);
+    // overlay persistent cache from the sheet (if the Cache tab exists yet)
+    try{ const crows=await gviz('Cache'); crows.slice(1).forEach(r=>{ const u=(r[0]||'').trim(); if(u) CACHE[u]=(r[1]||'').trim(); }); saveLocal(); }catch(e){}
     let curset='—'; srows.slice(1).forEach(r=>{ if((r[0]||'').trim().toLowerCase()==='current set'&&(r[1]||'').trim()) curset=(r[1]).trim(); });
     csEl.textContent=curset;
     const hd=(rows[0]||[]).map(h=>(h||'').trim());
@@ -352,15 +363,15 @@ async function load(){
       pulls:setCols.map(c=>({set:c.name,url:(r[c.i]||'').trim()})).filter(x=>x.url)
     }));
     if(!ROSTER.length){ grid.innerHTML=`<p class="empty2">No trainers in the sheet yet.</p>`; return; }
-    grid.innerHTML=ROSTER.map((t,ti)=>`
-      <details class="pool-details" data-ti="${ti}">
-        <summary><span class="pchev"></span><span class="pname">${esc(t.name)}</span><span class="pmeta">${t.pulls.length} session${t.pulls.length===1?'':'s'} logged</span></summary>
-        <div class="pool-body" data-loaded="0">${t.pulls.length?'<p class="loadingcards">Open to load collection…</p>':'<p class="empty2">No pulls logged yet.</p>'}</div>
-      </details>`).join('');
-    document.querySelectorAll('details.pool-details').forEach(d=>{
-      d.addEventListener('toggle',()=>{ if(d.open) loadTrainer(d); });
-    });
-  }catch(e){ grid.innerHTML=`<p class="empty2">Couldn't reach the sheet. Make sure it's shared &ldquo;Anyone with the link &middot; Viewer&rdquo; and has a tab named <b>Standings</b>.</p>`; }
+    grid.innerHTML=ROSTER.map((t,ti)=>{
+      const cached=t.pulls.filter(p=>CACHE[p.url]!=null).length;
+      return `<details class="pool-details" data-ti="${ti}">
+        <summary><span class="pchev"></span><span class="pname">${esc(t.name)}</span><span class="pmeta">${t.pulls.length} session${t.pulls.length===1?'':'s'}${cached<t.pulls.length?' · '+(t.pulls.length-cached)+' new':''}</span></summary>
+        <div class="pool-body" data-loaded="0">${t.pulls.length?'<p class="loadingcards">Open to view collection…</p>':'<p class="empty2">No pulls logged yet.</p>'}</div>
+      </details>`;
+    }).join('');
+    document.querySelectorAll('details.pool-details').forEach(d=>{ d.addEventListener('toggle',()=>{ if(d.open) loadTrainer(d); }); });
+  }catch(e){ grid.innerHTML=`<p class="empty2">Couldn't reach the sheet. Check sharing and the tab named <b>Standings</b>.</p>`; }
 }
 async function loadTrainer(d){
   const body=d.querySelector('.pool-body');
@@ -368,32 +379,33 @@ async function loadTrainer(d){
   body.setAttribute('data-loaded','1');
   const t=ROSTER[+d.getAttribute('data-ti')];
   if(!t || !t.pulls.length) return;
-  body.innerHTML=`<p class="loadingcards">Loading collection from ${t.pulls.length} session${t.pulls.length===1?'':'s'}…</p>`;
+  const newOnes=t.pulls.filter(p=>CACHE[p.url]==null);
+  body.innerHTML=`<p class="loadingcards">${newOnes.length?('Fetching '+newOnes.length+' new session'+(newOnes.length===1?'':'s')+'…'):'Building collection…'}</p>`;
+  // fetch only the uncached links, in parallel; cache them (local + sheet)
+  await Promise.all(newOnes.map(async p=>{
+    try{ const compact=toCompact(parseShare(await fetchShare(p.url))); CACHE[p.url]=compact; saveToSheet(p.url,compact); }
+    catch(e){ /* leave uncached -> counts as failed this time */ }
+  }));
+  saveLocal();
   const agg=new Map(); let ok=0; const failed=[];
-  for(const p of t.pulls){
-    try{
-      const cards=parseShare(await fetchShare(p.url)); ok++;
-      cards.forEach(c=>{
-        const key=c.code+'-'+c.num;
-        if(agg.has(key)) agg.get(key).count+=c.count;
-        else agg.set(key,{img:c.img,title:c.title,href:c.href,count:c.count,code:c.code,num:c.num});
-      });
-    }catch(e){ failed.push(p); }
-  }
-  const cards=[...agg.values()].sort((a,b)=> a.code<b.code?-1 : a.code>b.code?1 : a.num-b.num);
+  t.pulls.forEach(p=>{ const compact=CACHE[p.url];
+    if(compact==null){ failed.push(p); return; } ok++;
+    (compact?compact.split(','):[]).filter(Boolean).forEach(tok=>{ const ci=tok.lastIndexOf(':'); const id=tok.slice(0,ci); const cnt=+tok.slice(ci+1)||1;
+      if(agg.has(id)) agg.get(id).count+=cnt; else agg.set(id,{id,count:cnt}); });
+  });
+  const codeOf=id=>{ const x=id.indexOf('-'); return x>0?id.slice(0,x):id; };
+  const numOf=id=>{ const m=id.match(/(\d+)\D*$/); return m?parseInt(m[1]):0; };
+  const cards=[...agg.values()].sort((a,b)=>{ const ca=codeOf(a.id), cb=codeOf(b.id); if(ca!==cb) return ca<cb?-1:1; return (numOf(a.id)-numOf(b.id))||(a.id<b.id?-1:1); });
   if(!cards.length){
-    body.innerHTML=`<p class="fallback">Couldn't auto-load the cards for this trainer. Their share links: `+
-      t.pulls.map(p=>`<a href="${esc(p.url)}" target="_blank" rel="noopener">${esc(p.set)} ↗</a>`).join(' &middot; ')+`</p>`;
-    return;
+    body.innerHTML=`<p class="fallback">Couldn't load cards. Links: `+t.pulls.map(p=>`<a href="${esc(p.url)}" target="_blank" rel="noopener">${esc(p.set)} ↗</a>`).join(' &middot; ')+`</p>`; return;
   }
-  const totalCopies=cards.reduce((s,c)=>s+c.count,0);
-  let head=`<div class="collmeta"><b>${cards.length}</b> unique &middot; <b>${totalCopies}</b> total copies &middot; ${ok}/${t.pulls.length} sessions loaded</div>`;
-  if(failed.length) head+=`<p class="fallback">Couldn't load: `+failed.map(p=>`<a href="${esc(p.url)}" target="_blank" rel="noopener">${esc(p.set)} ↗</a>`).join(' &middot; ')+`</p>`;
-  const gridHTML=cards.map(c=>`<a class="carditem" href="${esc(c.href)}" target="_blank" rel="noopener" title="${esc(c.title)} (×${c.count})"><img loading="lazy" src="${esc(c.img)}" alt="${esc(c.title)}"><span class="qty">×${c.count}</span></a>`).join('');
-  body.innerHTML=head+`<div class="cardgrid">${gridHTML}</div>`;
+  const total=cards.reduce((s,c)=>s+c.count,0);
+  let hdr=`<div class="collmeta"><b>${cards.length}</b> unique &middot; <b>${total}</b> total copies &middot; ${ok}/${t.pulls.length} sessions loaded</div>`;
+  if(failed.length) hdr+=`<p class="fallback">Couldn't load: `+failed.map(p=>`<a href="${esc(p.url)}" target="_blank" rel="noopener">${esc(p.set)} ↗</a>`).join(' &middot; ')+`</p>`;
+  const g=cards.map(c=>`<a class="carditem" href="${imgFor(c.id)}" target="_blank" rel="noopener" title="${esc(c.id)} ×${c.count}"><img loading="lazy" src="${imgFor(c.id)}" alt="${esc(c.id)}"><span class="qty">×${c.count}</span></a>`).join('');
+  body.innerHTML=hdr+`<div class="cardgrid">${g}</div>`;
 }
-document.getElementById('refresh').addEventListener('click',load);
-load();
+document.getElementById('refresh').addEventListener('click',()=>{ CACHE=loadLocal(); load(); }); load();
 </script>
 <footer><div class="wrap">
   <p class="mono">PROGRESSION LEAGUE · a homebrew Pok&eacute;mon TCG format · v2.0</p>
