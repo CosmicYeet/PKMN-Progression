@@ -251,7 +251,7 @@ footer p{margin:6px 0}
       <thead><tr><th>#</th><th>Trainer</th><th class="num">Played</th><th class="num">Won</th><th class="num">Lost</th><th class="num">Pts</th></tr></thead>
       <tbody id="board"><tr><td colspan="6" class="empty">Loading…</td></tr></tbody>
     </table>
-    <p class="note tie-note">Calculated automatically from completed scores in Rotation Columns H and I. Tiebreak on equal points: more match wins, then fewer match losses.</p>
+    <p class="note tie-note">Calculated automatically from completed scores in Rotation Columns H and I. Tiebreak on equal points: more match wins, then fewer match losses. Identical records share a rank; the next rank skips accordingly.</p>
     <p class="synced" id="synced"></p>
   </section>
 
@@ -351,7 +351,14 @@ async function load(){
       a.pts+=result.p1Pts;b.pts+=result.p2Pts;
     });
     const list=[...stats.values()].sort((a,b)=>b.pts-a.pts||b.won-a.won||a.lost-b.lost||a.name.localeCompare(b.name));
-    board.innerHTML = list.length ? list.map((p,i)=>`<tr class="${i===0&&p.pts>0?'leader':''}"><td class="rank">${i+1}</td><td class="name">${esc(p.name)}</td><td class="num">${p.played}</td><td class="num">${p.won}</td><td class="num">${p.lost}</td><td class="pts">${p.pts}</td></tr>`).join('') : `<tr><td colspan="6" class="empty">No trainers in the sheet yet.</td></tr>`;
+    let rank=0,previous=null;
+    const ranked=list.map((p,i)=>{
+      const tied=previous&&p.pts===previous.pts&&p.won===previous.won&&p.lost===previous.lost;
+      if(!tied)rank=i+1;
+      previous=p;
+      return{...p,rank};
+    });
+    board.innerHTML = ranked.length ? ranked.map(p=>`<tr class="${p.rank===1&&p.played>0?'leader':''}"><td class="rank">${p.rank}</td><td class="name">${esc(p.name)}</td><td class="num">${p.played}</td><td class="num">${p.won}</td><td class="num">${p.lost}</td><td class="pts">${p.pts}</td></tr>`).join('') : `<tr><td colspan="6" class="empty">No trainers in the sheet yet.</td></tr>`;
     titlesEl.innerHTML = ttl.length ? ttl.map(t=>`<div class="titlecard"><div class="tera">${esc(t.era)}</div><div class="tchamp">&#9819; ${esc(t.champ)}</div></div>`).join('') : `<p class="empty2">No era titles claimed yet. The first is decided at the close of the Wizards Era.</p>`;
     syncEl.textContent='Synced '+new Date().toLocaleTimeString()+' · auto-refreshes every 30s';
   }catch(e){
