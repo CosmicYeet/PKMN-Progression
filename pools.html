@@ -244,7 +244,7 @@ footer p{margin:6px 0}
   <header class="pagehead">
     <p class="eyebrow">The Vault · Anti-cheat</p>
     <h1 class="pagetitle">Card Pools</h1>
-    <p class="thesis">Open a trainer to see their whole collection &mdash; every card pulled across all sessions, with a running copy count. Each share link is fetched once and cached, so it stays fast as the league grows.</p>
+    <p class="thesis">Open a trainer to see their whole collection &mdash; every card pulled across all sessions, with a running copy count. New links are fetched in parallel and cached, so it stays fast as the league grows.</p>
     <p class="current-set">Current set: <span id="curset">…</span> <button id="refresh" class="refresh">&#8635; Refresh</button></p>
   </header>
   <section>
@@ -253,7 +253,7 @@ footer p{margin:6px 0}
       <ol class="flow">
         <li>Right after opening, click <b>Share your Pulls &rarr; Copy Link</b> in the sim.</li>
         <li>Drop the link where your group collects them (Discord works), tagged with name and set.</li>
-        <li>The Commissioner pastes each link into the league <b>Google Sheet</b> &mdash; player's row, the set's column. New links are fetched &amp; cached the first time someone opens that trainer.</li>
+        <li>The Commissioner pastes each link into the league <b>Google Sheet</b> &mdash; player's row, the set's column.</li>
       </ol>
     </div>
     <p id="proxymode"></p>
@@ -284,8 +284,7 @@ function gviz(tab){
 }
 function esc(s){ return (s==null?'':(''+s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function num(v){ v=(v==null?'':(''+v)).trim(); return (v===''||isNaN(+v))?0:+v; }
-
-function jsonp(url){
+function jsonp(url,ms){
   return new Promise((resolve,reject)=>{
     const cb='__pl_'+Math.random().toString(36).slice(2);
     const s=document.createElement('script'); let done=false;
@@ -294,17 +293,14 @@ function jsonp(url){
     s.onerror=()=>{ if(!done){ cleanup(); reject(new Error('jsonp error')); } };
     s.src=url+(url.indexOf('?')>-1?'&':'?')+'callback='+cb;
     document.head.appendChild(s);
-    setTimeout(()=>{ if(!done){ cleanup(); reject(new Error('jsonp timeout')); } },30000);
+    setTimeout(()=>{ if(!done){ cleanup(); reject(new Error('jsonp timeout')); } }, ms||45000);
   });
 }
 async function fetchShare(url){
   if(typeof PROXY_URL!=='undefined' && PROXY_URL){
     try{ const html=await jsonp(PROXY_URL+'?url='+encodeURIComponent(url)); if(html && html.indexOf('images.pokemoncard.io')>-1) return html; }catch(e){}
   }
-  const builders=[
-    x=>'https://api.codetabs.com/v1/proxy/?quest='+encodeURIComponent(x),
-    x=>'https://api.allorigins.win/raw?url='+encodeURIComponent(x)
-  ];
+  const builders=[ x=>'https://api.codetabs.com/v1/proxy/?quest='+encodeURIComponent(x), x=>'https://api.allorigins.win/raw?url='+encodeURIComponent(x) ];
   for(const bld of builders){
     try{ const ctrl=new AbortController(); const to=setTimeout(()=>ctrl.abort(),9000);
       const r=await fetch(bld(url),{cache:'no-store',signal:ctrl.signal}); clearTimeout(to);
@@ -313,7 +309,6 @@ async function fetchShare(url){
   }
   throw new Error('all sources failed');
 }
-/* returns compact "id:count" list, e.g. "base1-1:2,base1-6:1" */
 function parseShare(html){
   const doc=new DOMParser().parseFromString(html,'text/html');
   const cards=[];
@@ -341,6 +336,10 @@ function saveToSheet(url,compact){
   s.src=PROXY_URL+'?save='+encodeURIComponent(url)+'&cards='+encodeURIComponent(compact)+'&callback='+cb;
   document.head.appendChild(s);
 }
+async function batchFetch(urls){
+  try{ return await jsonp(PROXY_URL+'?batch='+encodeURIComponent(urls.join('\n')), 55000); }
+  catch(e){ return null; }
+}
 async function load(){
   const grid=document.getElementById('pools'), csEl=document.getElementById('curset'), modeEl=document.getElementById('proxymode');
   modeEl.innerHTML = PROXY_URL ? '' : `<span class="fallback">Set <b>PROXY_URL</b> (see cors-proxy.gs) so card images load reliably.</span>`;
@@ -348,9 +347,7 @@ async function load(){
   grid.innerHTML=`<p class="empty2">Loading…</p>`;
   CACHE=loadLocal();
   try{
-    const tasks=[gviz('Standings'),gviz('Settings')];
-    const [rows,srows]=await Promise.all(tasks);
-    // overlay persistent cache from the sheet (if the Cache tab exists yet)
+    const [rows,srows]=await Promise.all([gviz('Standings'),gviz('Settings')]);
     try{ const crows=await gviz('Cache'); crows.slice(1).forEach(r=>{ const u=(r[0]||'').trim(); if(u) CACHE[u]=(r[1]||'').trim(); }); saveLocal(); }catch(e){}
     let curset='—'; srows.slice(1).forEach(r=>{ if((r[0]||'').trim().toLowerCase()==='current set'&&(r[1]||'').trim()) curset=(r[1]).trim(); });
     csEl.textContent=curset;
@@ -364,9 +361,9 @@ async function load(){
     }));
     if(!ROSTER.length){ grid.innerHTML=`<p class="empty2">No trainers in the sheet yet.</p>`; return; }
     grid.innerHTML=ROSTER.map((t,ti)=>{
-      const cached=t.pulls.filter(p=>CACHE[p.url]!=null).length;
+      const cached=t.pulls.filter(p=>CACHE[p.url]!=null).length, missing=t.pulls.length-cached;
       return `<details class="pool-details" data-ti="${ti}">
-        <summary><span class="pchev"></span><span class="pname">${esc(t.name)}</span><span class="pmeta">${t.pulls.length} session${t.pulls.length===1?'':'s'}${cached<t.pulls.length?' · '+(t.pulls.length-cached)+' new':''}</span></summary>
+        <summary><span class="pchev"></span><span class="pname">${esc(t.name)}</span><span class="pmeta">${t.pulls.length} session${t.pulls.length===1?'':'s'}${missing?' · '+missing+' new':''}</span></summary>
         <div class="pool-body" data-loaded="0">${t.pulls.length?'<p class="loadingcards">Open to view collection…</p>':'<p class="empty2">No pulls logged yet.</p>'}</div>
       </details>`;
     }).join('');
@@ -380,13 +377,24 @@ async function loadTrainer(d){
   const t=ROSTER[+d.getAttribute('data-ti')];
   if(!t || !t.pulls.length) return;
   const newOnes=t.pulls.filter(p=>CACHE[p.url]==null);
+  const setMsg=m=>{ const el=body.querySelector('.loadingcards'); if(el) el.textContent=m; };
   body.innerHTML=`<p class="loadingcards">${newOnes.length?('Fetching '+newOnes.length+' new session'+(newOnes.length===1?'':'s')+'…'):'Building collection…'}</p>`;
-  // fetch only the uncached links, in parallel; cache them (local + sheet)
-  await Promise.all(newOnes.map(async p=>{
-    try{ const compact=toCompact(parseShare(await fetchShare(p.url))); CACHE[p.url]=compact; saveToSheet(p.url,compact); }
-    catch(e){ /* leave uncached -> counts as failed this time */ }
-  }));
+  // Fetch uncached links in server-side-parallel batches (12 per call).
+  const CH=12;
+  for(let i=0;i<newOnes.length;i+=CH){
+    const chunk=newOnes.slice(i,i+CH), urls=chunk.map(p=>p.url);
+    let resp=await batchFetch(urls); if(!resp) resp=await batchFetch(urls); // one retry
+    const toSave={};
+    chunk.forEach(p=>{ const item=resp && resp[p.url]; if(!item) return;
+      if(item.c!=null){ CACHE[p.url]=item.c; }
+      else if(item.h){ const cp=toCompact(parseShare(item.h)); CACHE[p.url]=cp; toSave[p.url]=cp; } });
+    Object.keys(toSave).forEach(u=>saveToSheet(u,toSave[u]));
+    setMsg(`Fetched ${Math.min(i+CH,newOnes.length)}/${newOnes.length}…`);
+  }
+  // last-resort single fetch for any stragglers the batch couldn't get
+  for(const p of newOnes){ if(CACHE[p.url]==null){ try{ const cp=toCompact(parseShare(await fetchShare(p.url))); CACHE[p.url]=cp; saveToSheet(p.url,cp); }catch(e){} } }
   saveLocal();
+  // aggregate
   const agg=new Map(); let ok=0; const failed=[];
   t.pulls.forEach(p=>{ const compact=CACHE[p.url];
     if(compact==null){ failed.push(p); return; } ok++;
@@ -396,9 +404,7 @@ async function loadTrainer(d){
   const codeOf=id=>{ const x=id.indexOf('-'); return x>0?id.slice(0,x):id; };
   const numOf=id=>{ const m=id.match(/(\d+)\D*$/); return m?parseInt(m[1]):0; };
   const cards=[...agg.values()].sort((a,b)=>{ const ca=codeOf(a.id), cb=codeOf(b.id); if(ca!==cb) return ca<cb?-1:1; return (numOf(a.id)-numOf(b.id))||(a.id<b.id?-1:1); });
-  if(!cards.length){
-    body.innerHTML=`<p class="fallback">Couldn't load cards. Links: `+t.pulls.map(p=>`<a href="${esc(p.url)}" target="_blank" rel="noopener">${esc(p.set)} ↗</a>`).join(' &middot; ')+`</p>`; return;
-  }
+  if(!cards.length){ body.innerHTML=`<p class="fallback">Couldn't load cards. Links: `+t.pulls.map(p=>`<a href="${esc(p.url)}" target="_blank" rel="noopener">${esc(p.set)} ↗</a>`).join(' &middot; ')+`</p>`; return; }
   const total=cards.reduce((s,c)=>s+c.count,0);
   let hdr=`<div class="collmeta"><b>${cards.length}</b> unique &middot; <b>${total}</b> total copies &middot; ${ok}/${t.pulls.length} sessions loaded</div>`;
   if(failed.length) hdr+=`<p class="fallback">Couldn't load: `+failed.map(p=>`<a href="${esc(p.url)}" target="_blank" rel="noopener">${esc(p.set)} ↗</a>`).join(' &middot; ')+`</p>`;
