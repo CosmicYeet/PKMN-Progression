@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Card Pools — Progression League</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Familjen+Grotesk:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#14172B; --ink-2:#1D2138;
+  --paper:#F4ECD8; --paper-line:#E4D8B8;
+  --red:#D53A3A; --gold:#E7B93C;
+  --soft:#4B4F6B; --soft-2:#6E7290;
+  --grass:#63BC5A; --fire:#E25441; --water:#4F9DE0;
+  --bolt:#F4D23C; --psy:#9E5CB5; --fight:#C77A3B;
+  --shadow:0 18px 40px -22px rgba(0,0,0,.55);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;background:var(--ink);color:var(--paper);
+  font-family:"Familjen Grotesk",system-ui,sans-serif;
+  font-size:17px;line-height:1.6;-webkit-font-smoothing:antialiased;
+  background-image:radial-gradient(circle at 18% -4%,rgba(213,58,58,.14),transparent 45%),radial-gradient(circle at 92% 2%,rgba(231,185,60,.10),transparent 40%);
+  background-attachment:fixed;
+}
+.wrap{max-width:940px;margin:0 auto;padding:0 22px}
+.mono{font-family:"Space Mono",monospace}
+
+/* ---------- NAV ---------- */
+.topnav{position:sticky;top:0;z-index:50;background:rgba(20,23,43,.82);backdrop-filter:blur(10px);border-bottom:1px solid rgba(244,236,216,.12)}
+.topnav .inner{max-width:940px;margin:0 auto;padding:12px 22px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.brand{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;color:var(--paper);text-decoration:none;font-size:16px;letter-spacing:-.01em}
+.brand::before{content:"\25C6 ";color:var(--red)}
+.navlinks{display:flex;gap:4px;flex-wrap:wrap}
+.navlinks a{font-family:"Space Mono",monospace;font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--soft-2);text-decoration:none;padding:7px 11px;border-radius:7px}
+.navlinks a:hover{color:var(--paper);background:rgba(244,236,216,.06)}
+.navlinks a.active{color:var(--gold)}
+
+/* ---------- HERO ---------- */
+header.hero{padding:70px 0 44px}
+.eyebrow{font-family:"Space Mono",monospace;font-size:13px;letter-spacing:.32em;text-transform:uppercase;color:var(--gold);margin:0 0 18px}
+.eyebrow::before{content:"\25C6 ";color:var(--red)}
+h1{
+  font-family:"Bricolage Grotesque",sans-serif;font-weight:800;
+  font-size:clamp(50px,10.5vw,108px);line-height:.9;margin:0;letter-spacing:-.02em;
+  background:linear-gradient(100deg,#F4ECD8 0%,#F4ECD8 30%,#8FE3FF 42%,#F4A6E8 52%,#FFD98A 62%,#F4ECD8 74%,#F4ECD8 100%);
+  background-size:220% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;
+  animation:holo 7s ease-in-out infinite;
+}
+@keyframes holo{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+.subtitle{font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:clamp(19px,3.2vw,28px);margin:8px 0 0;color:var(--paper)}
+.thesis{max-width:640px;margin:22px 0 0;color:#D9D2BE;font-size:18px}
+.thesis b{color:var(--paper)}
+
+.glance{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;margin:40px 0 0;background:var(--paper-line);border:1px solid var(--paper-line);border-radius:10px;overflow:hidden;box-shadow:var(--shadow)}
+.glance div{background:var(--ink-2);padding:18px 16px}
+.glance .k{font-family:"Space Mono",monospace;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--soft-2)}
+.glance .v{font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:23px;margin-top:6px;color:var(--paper)}
+.glance .v small{font-weight:400;font-size:12px;color:var(--gold);font-family:"Space Mono",monospace}
+@media(max-width:640px){.glance{grid-template-columns:repeat(2,1fr)}}
+
+/* ---------- PAGE HEADERS (standings / pools) ---------- */
+.page{padding-bottom:20px}
+.pagehead{padding:56px 0 34px}
+.pagetitle{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:clamp(44px,9vw,84px);line-height:.92;margin:6px 0 0;letter-spacing:-.02em;color:var(--paper)}
+.current-set{font-family:"Space Mono",monospace;font-size:13px;color:var(--soft-2);margin-top:18px;letter-spacing:.06em}
+.current-set span{color:var(--gold)}
+
+/* ---------- SECTIONS ---------- */
+section{padding:34px 0}
+.sec-head{display:flex;align-items:baseline;gap:16px;margin:0 0 22px;border-bottom:1px solid rgba(244,236,216,.14);padding-bottom:14px}
+.sec-no{font-family:"Space Mono",monospace;font-size:14px;color:var(--red);font-weight:700}
+h2{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:clamp(25px,4.2vw,36px);margin:0;letter-spacing:-.01em}
+.sec-intro{color:#C9C2AE;max-width:660px;margin:-6px 0 24px}
+
+.card{background:var(--paper);color:var(--ink);border-radius:12px;padding:26px 28px;box-shadow:var(--shadow)}
+.card + .card{margin-top:16px}
+.card h3{font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:20px;margin:0 0 8px;color:var(--ink)}
+.card p{margin:0;color:#33374d}
+.card p.note{margin-top:12px;font-size:15px;color:var(--soft)}
+.card a{color:#2b5fb0;text-decoration:none;font-weight:600}
+.card a:hover{text-decoration:underline}
+
+/* loop */
+.loop{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+@media(max-width:640px){.loop{grid-template-columns:1fr}}
+.step{background:var(--paper);color:var(--ink);border-radius:12px;padding:22px 22px 20px;box-shadow:var(--shadow);border-top:3px solid var(--red)}
+.step .n{font-family:"Space Mono",monospace;font-weight:700;font-size:13px;color:var(--red);letter-spacing:.1em}
+.step h3{font-family:"Bricolage Grotesque",sans-serif;font-size:19px;margin:8px 0 6px}
+.step p{margin:0;font-size:15px;color:#3a3e55}
+
+/* golden rule */
+.golden{background:linear-gradient(135deg,#1E2238,#191d31);border:1px solid var(--gold);border-left:5px solid var(--gold);border-radius:12px;padding:26px 28px;box-shadow:var(--shadow)}
+.golden .tag{font-family:"Space Mono",monospace;font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--gold)}
+.golden h3{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:26px;margin:8px 0 12px;color:var(--paper)}
+.golden p{margin:0;color:#D9D2BE}
+.golden .rule-pair{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:18px}
+@media(max-width:560px){.golden .rule-pair{grid-template-columns:1fr}}
+.golden .rule-pair div{background:rgba(244,236,216,.06);border-radius:9px;padding:14px 16px}
+.golden .rule-pair .yes{color:var(--grass);font-family:"Space Mono",monospace;font-size:12px;letter-spacing:.1em}
+.golden .rule-pair .no{color:var(--fire);font-family:"Space Mono",monospace;font-size:12px;letter-spacing:.1em}
+.golden .rule-pair b{color:var(--paper);display:block;margin-top:4px;font-family:"Bricolage Grotesque",sans-serif}
+.golden .rule-pair span{color:#C4BEAC;font-size:14px}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:18px}
+.chip{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-family:"Space Mono",monospace;font-weight:700;font-size:13px;color:#14172B}
+
+/* stat list */
+.rules-list{list-style:none;margin:0;padding:0}
+.rules-list li{display:flex;gap:16px;padding:15px 0;border-bottom:1px solid rgba(20,23,43,.10)}
+.rules-list li:last-child{border-bottom:0}
+.rules-list .lbl{font-family:"Space Mono",monospace;font-size:12px;color:#b3892a;letter-spacing:.08em;white-space:nowrap;min-width:112px;padding-top:2px;text-transform:uppercase}
+.rules-list .txt{color:#33374d}
+.rules-list .txt b{color:var(--ink)}
+
+/* ---------- TRACKER ---------- */
+.legend{font-family:"Familjen Grotesk";font-size:14px;color:#C9C2AE;margin:0 0 18px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.legend b{color:var(--gold)}
+.lg-dot{width:10px;height:10px;border-radius:50%;display:inline-block;vertical-align:middle}
+.lg-dot.main{background:var(--ink);border:2px solid var(--gold)}
+.lg-dot.spec{background:transparent;border:2px solid var(--soft-2)}
+.track-wrap{margin-top:4px}
+.era{border:1px solid rgba(244,236,216,.12);border-radius:12px;margin-bottom:12px;overflow:hidden;background:rgba(29,33,56,.45)}
+.era>summary{list-style:none;cursor:pointer;padding:16px 20px;display:flex;align-items:center;gap:14px;user-select:none}
+.era>summary::-webkit-details-marker{display:none}
+.era>summary:hover{background:rgba(244,236,216,.03)}
+.chev{width:9px;height:9px;border-right:2px solid var(--gold);border-bottom:2px solid var(--gold);transform:rotate(-45deg);transition:transform .2s;flex:none;margin-right:2px}
+.era[open]>summary .chev{transform:rotate(45deg)}
+.era-name{font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:18px;color:var(--paper)}
+.era-meta{font-family:"Space Mono",monospace;font-size:11px;color:var(--soft-2);letter-spacing:.08em;text-transform:uppercase;margin-left:auto;text-align:right}
+.era[open]>summary{border-bottom:1px solid rgba(244,236,216,.10)}
+.sets{padding:4px 20px 12px}
+.trow{display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid rgba(244,236,216,.05)}
+.trow:last-child{border-bottom:0}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--ink);border:2px solid var(--gold);flex:none}
+.trow.special .dot{border-color:var(--soft-2);width:8px;height:8px}
+.trow.kick .dot{background:var(--red);border-color:var(--red);box-shadow:0 0 0 4px rgba(213,58,58,.22)}
+.tname{font-family:"Familjen Grotesk";font-size:15.5px;color:var(--paper)}
+.trow.special .tname{color:#B9B3A2}
+.trow.kick .tname{font-weight:600}
+.badge{margin-left:auto;font-family:"Space Mono",monospace;font-size:10px;letter-spacing:.06em;text-transform:uppercase;padding:3px 9px;border-radius:20px;background:rgba(231,185,60,.13);color:var(--gold);border:1px solid rgba(231,185,60,.32);white-space:nowrap}
+.badge.kickbadge{background:var(--red);color:#fff;border-color:var(--red)}
+
+/* ordered flow */
+ol.flow{counter-reset:s;list-style:none;margin:0;padding:0}
+ol.flow li{counter-increment:s;position:relative;padding:0 0 20px 52px;color:#33374d}
+ol.flow li::before{content:counter(s);position:absolute;left:0;top:-2px;width:34px;height:34px;border-radius:8px;background:var(--ink-2);border:1px solid var(--gold);color:var(--gold);font-family:"Space Mono",monospace;font-weight:700;display:grid;place-items:center}
+ol.flow li::after{content:"";position:absolute;left:17px;top:34px;bottom:2px;width:1px;background:rgba(29,33,56,.25)}
+ol.flow li:last-child{padding-bottom:0}
+ol.flow li:last-child::after{display:none}
+ol.flow b{color:var(--ink)}
+.howto ol.flow li{color:#33374d}
+
+/* season points */
+.points{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:16px}
+@media(max-width:560px){.points{grid-template-columns:1fr}}
+.pt{background:var(--paper);color:var(--ink);border-radius:12px;padding:20px;text-align:center;box-shadow:var(--shadow)}
+.pt .big{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:42px;color:var(--red);line-height:1}
+.pt .lbl{font-family:"Space Mono",monospace;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--soft);margin-top:8px}
+
+/* ---------- STANDINGS TABLE ---------- */
+.board{width:100%;border-collapse:collapse;background:var(--paper);color:var(--ink);border-radius:12px;overflow:hidden;box-shadow:var(--shadow)}
+.board th{font-family:"Space Mono",monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;text-align:left;padding:14px 16px;background:var(--ink-2);color:var(--soft-2)}
+.board th.num{text-align:center}
+.board td{padding:15px 16px;border-bottom:1px solid var(--paper-line);color:#33374d}
+.board tr:last-child td{border-bottom:0}
+.board .rank{font-family:"Space Mono",monospace;font-weight:700;color:var(--soft);width:44px}
+.board .name{font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:17px;color:var(--ink)}
+.board td.num{text-align:center;font-family:"Space Mono",monospace}
+.board .pts{text-align:center;font-family:"Bricolage Grotesque",sans-serif;font-weight:800;color:var(--red);font-size:19px}
+.board tr.leader td{background:linear-gradient(90deg,rgba(231,185,60,.20),transparent)}
+.board tr.leader .name::after{content:" \265B";color:#b3892a}
+.board .empty{text-align:center;color:var(--soft);font-family:"Space Mono",monospace;font-size:14px}
+.tie-note{color:var(--soft-2);font-size:14px;margin-top:14px}
+
+.titlegrid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+@media(max-width:640px){.titlegrid{grid-template-columns:1fr}}
+.titlecard{background:var(--paper);color:var(--ink);border-radius:11px;padding:18px 20px;box-shadow:var(--shadow);border-left:4px solid var(--gold)}
+.tera{font-family:"Space Mono",monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--soft)}
+.tchamp{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:20px;color:var(--ink);margin-top:4px}
+.empty2{color:var(--soft-2);font-family:"Space Mono",monospace;font-size:14px;margin:0}
+
+/* ---------- POOLS ---------- */
+.poolgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+@media(max-width:640px){.poolgrid{grid-template-columns:1fr}}
+.pool{background:var(--paper);color:var(--ink);border-radius:12px;padding:20px 22px;box-shadow:var(--shadow)}
+.pool h3{font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:20px;margin:0;color:var(--ink)}
+.pool .count{font-family:"Space Mono",monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--soft-2);margin:4px 0 10px}
+.pull{display:flex;gap:12px;padding:9px 0;border-bottom:1px solid var(--paper-line);align-items:baseline}
+.pull:last-child{border-bottom:0}
+.pull .pset{font-family:"Familjen Grotesk";font-weight:600;color:var(--ink);min-width:120px;flex:none}
+.pull a{color:#2b5fb0;text-decoration:none;font-family:"Space Mono",monospace;font-size:12.5px;word-break:break-all}
+.pull a:hover{text-decoration:underline}
+
+/* ---------- FOOTER ---------- */
+footer{padding:52px 0 44px;border-top:1px solid rgba(244,236,216,.14);margin-top:28px;color:var(--soft-2);font-size:14px}
+footer .mono{color:var(--soft-2)}
+footer a{color:var(--gold);text-decoration:none}
+footer p{margin:6px 0}
+.disc{font-size:12px;color:var(--soft);margin-top:18px;max-width:660px}
+
+@media(prefers-reduced-motion:reduce){h1{animation:none}.chev{transition:none}}
+
+</style>
+</head>
+<body><nav class="topnav"><div class="inner">
+  <a class="brand" href="index.html">Progression League</a>
+  <div class="navlinks"><a href="index.html">Rulebook</a><a href="standings.html">Standings</a><a href="pools.html" class="active">Card Pools</a></div>
+</div></nav>
+<div class="wrap page">
+  <header class="pagehead">
+    <p class="eyebrow">The Vault · Anti-cheat</p>
+    <h1 class="pagetitle">Card Pools</h1>
+    <p class="thesis">The single source of truth for what everyone owns. After each pack-opening, every player posts their <b>Share</b> link from the sim here. Decks are audited against these pulls &mdash; if a card isn't in your logged pool, it can't be in your deck.</p>
+  </header>
+
+  <section>
+    <div class="card howto">
+      <h3>How to log your pulls</h3>
+      <ol class="flow">
+        <li>Open your packs in the sim, then click <b>Share your Pulls &rarr; Copy Link</b>.</li>
+        <li>Paste that link into your entry in the data block below (one line per session).</li>
+        <li>Commit. Everyone loads the same page, so the pool is public and verifiable.</li>
+      </ol>
+      <p class="note">Optional belt-and-suspenders: also keep a logged-in <b>My Collection</b> on the sim so your cumulative pool lives in one permanent place.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="sec-no">◆</span><h2>The Trainers</h2></div>
+    <div id="pools" class="poolgrid"></div>
+  </section>
+</div>
+
+<script>
+/* ================= EDIT THIS BLOCK EACH SESSION ================= */
+const PLAYERS = [
+  { name: "Player One", pulls: [
+    // { set: "Base Set", url: "https://pokemoncard.io/pack-sim?draft=XXXX" },
+  ]},
+  { name: "Player Two",   pulls: [] },
+  { name: "Player Three", pulls: [] },
+  { name: "Player Four",  pulls: [] },
+  { name: "Player Five",  pulls: [] },
+];
+/* =============================================================== */
+
+const grid = document.getElementById('pools');
+PLAYERS.forEach(p => {
+  const pulls = p.pulls || [];
+  let inner;
+  if (!pulls.length) {
+    inner = '<p class="empty2">No pulls logged yet.</p>';
+  } else {
+    inner = pulls.map(x =>
+      `<div class="pull"><span class="pset">${x.set}</span><a href="${x.url}" target="_blank" rel="noopener">${x.url}</a></div>`
+    ).join('');
+  }
+  grid.insertAdjacentHTML('beforeend',
+    `<div class="pool">
+       <h3>${p.name}</h3>
+       <div class="count">${pulls.length} session${pulls.length===1?'':'s'} logged</div>
+       <div class="pulls">${inner}</div>
+     </div>`);
+});
+</script>
+<footer><div class="wrap">
+  <p class="mono">PROGRESSION LEAGUE · a homebrew Pok&eacute;mon TCG format · v2.0</p>
+  <p>Simulator: <a href="https://pokemoncard.io/pack-sim">pokemoncard.io/pack-sim</a> &nbsp;·&nbsp; Arena: Tabletop Simulator</p>
+  <p class="disc">Fan-made house-rules document for private play. Not produced by, endorsed by, or affiliated with Nintendo, The Pok&eacute;mon Company International, or GAME FREAK. All set names and card properties belong to their respective owners.</p>
+</div></footer>
+</body></html>
