@@ -1,3 +1,103 @@
+
+Claude finished the response
+
+Thought for 4m 39s
+Thought for 4m 39s
+This is a big set of changes — text edits, a ~200-set tracker, two new pages, and reworking the scoring. Let me answer your Swiss question first, then build it all.
+
+On ties: you're right. In untimed Pokémon, a battle essentially never ends in a draw — the only ways are a true simultaneous game-loss (astronomically rare) or a clock running out, and you're not using a clock. So I've dropped the tie entirely: Win = 3, Loss = 0. Swiss itself stays, but it never needed ties — Swiss is just the pairing method (match people by record so games stay competitive), not a scoring thing. Two things I did add for a 5+ league: an odd-turnout bye counts as a win, and if you ever do impose a time limit, the tiebreak is prizes-taken, then a sudden-death prize. All reflected on the new Standings page.
+
+Let me build the site. I'll split it into a shared stylesheet plus three linked pages (Rulebook / Standings / Card Pools) so you can update standings and pools without touching the rules.
+
+
+Viewed 5 files, ran 4 commands, read a file · 3 notes
+
+
+
+
+
+Viewed 5 files, ran 4 commands, read a file · 3 notes
+What changed on the rulebook
+
+Eyebrow now reads "Pokémon TCG · Progression League"; the thesis and pack-opening step use your exact new wording; the TTS step 5 is updated; and the whole thing now says "battle" instead of "duel."
+Optional Spice is gone.
+The Season Track is rebuilt as all 152 sets (128 main + 24 special), in your exact order, grouped into 10 collapsible eras. Base Set is flagged "Kickoff"; every Special carries a gold "Special · 1/2 pack" badge, and a legend up top explains they open alongside the next main set in the same session. Base Set 2 and Legendary Collection are now included as normal rows.
+The Season section reflects the new scoring: Win 3 / Loss 0, bye rule, and the timed-game tiebreak.
+Two new pages (linked from the top nav on every page):
+
+Standings — a live leaderboard that auto-ranks and auto-totals points. You edit one STANDINGS block near the bottom of standings.html (names + won/lost) and commit; it sorts and crowns the leader for you. There's also an Era Titles tracker.
+Card Pools — your anti-cheat vault. Each player pastes their sim Share link per session into the PLAYERS block in pools.html; decks get audited against it. Instructions are baked into the page.
+To deploy: upload all four files to your repo root (index.html, styles.css, standings.html, pools.html). Keep index.html named exactly that so the site root still loads the rulebook — the nav links between pages are relative, so they just work. To update standings or pools between sessions, edit only that file's data block and commit; nobody touches the rules.
+
+Two things to confirm:
+
+Placeholder names. Both new pages ship with "Player One–Five." Send me the real names (and who's Commissioner) and I'll drop them in.
+Lost Origin Trainer Gallery. In your list it was the one Trainer Gallery without a "Special" tag, while Brilliant Stars, Astral Radiance, and Silver Tempest galleries all had "Special · 2 pack." I left it exactly as you wrote it — a normal row — but if that was a slip and it should be a 2-pack special like the others, say the word and I'll fix it.
+
+Index
+Code · HTML 
+
+Styles
+Code · CSS 
+
+Standings
+Code · HTML 
+
+Pools
+Code · HTML 
+The lost origin trainer gallery was a slip, please fix taht
+
+
+Edited a file, ran a command
+Edited a file, ran a command
+Fixed — Lost Origin Trainer Gallery now carries the Special · 2 packs badge, matching the other Trainer Galleries. The counts updated to 127 main + 25 special (the hero's "SETS" tile reflects this automatically).
+
+
+Presented file
+Presented file
+Just re-upload this index.html to your repo (the other three files are unchanged). Still standing by for the real player names whenever you want them dropped into the Standings and Card Pools pages.
+
+
+Index
+Code · HTML 
+now the html doesnt look pretty anymore?
+
+
+Thought for 33s
+Thought for 33s
+That's the shared stylesheet not being found — almost certainly styles.css isn't sitting in the repo next to index.html.
+
+Here's what happened: your original hosted file had all its styling baked inside it, so it was self-sufficient. The new index.html I gave you instead pulls its look from a separate styles.css file (<link href="styles.css"> near the top). When you re-uploaded just index.html, the browser goes looking for styles.css, doesn't find it in the repo, and falls back to plain unstyled HTML — hence "not pretty."
+
+Rather than have you juggle a separate CSS file (and risk this again), let me bake the styles back into each page so every file is self-contained like your original was.
+
+
+Ran 3 commands, edited 2 files, viewed a file · 3 notes
+
+Ran 3 commands, edited 2 files, viewed a file · 3 notes
+Each of these now carries its own styling inside it — no separate styles.css needed anymore. Upload these three to your repo (you can delete styles.css from it if you added it; it's no longer referenced). Once index.html is replaced, the page will look right again, and the Standings and Card Pools nav links will work as soon as those two files are up alongside it.
+
+One trade-off to know: since the CSS now lives in all three files, if you ever want to restyle later, that change has to be made in each file rather than one. Given you'll mostly be editing the data blocks (player names, scores, pull links) rather than the look, that's a fine trade for never hitting the missing-stylesheet problem again. And whenever you want the real player names dropped in, just send them over.
+
+
+Index
+Code · HTML 
+
+Standings
+Code · HTML 
+
+Pools
+Code · HTML 
+
+Want to be notified when Claude responds?
+
+
+
+
+Claude is AI and can make mistakes. Please double-check responses.
+
+
+Index · HTML
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,7 +107,203 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Familjen+Grotesk:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css">
+<style>
+:root{
+  --ink:#14172B; --ink-2:#1D2138;
+  --paper:#F4ECD8; --paper-line:#E4D8B8;
+  --red:#D53A3A; --gold:#E7B93C;
+  --soft:#4B4F6B; --soft-2:#6E7290;
+  --grass:#63BC5A; --fire:#E25441; --water:#4F9DE0;
+  --bolt:#F4D23C; --psy:#9E5CB5; --fight:#C77A3B;
+  --shadow:0 18px 40px -22px rgba(0,0,0,.55);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;background:var(--ink);color:var(--paper);
+  font-family:"Familjen Grotesk",system-ui,sans-serif;
+  font-size:17px;line-height:1.6;-webkit-font-smoothing:antialiased;
+  background-image:radial-gradient(circle at 18% -4%,rgba(213,58,58,.14),transparent 45%),radial-gradient(circle at 92% 2%,rgba(231,185,60,.10),transparent 40%);
+  background-attachment:fixed;
+}
+.wrap{max-width:940px;margin:0 auto;padding:0 22px}
+.mono{font-family:"Space Mono",monospace}
+ 
+/* ---------- NAV ---------- */
+.topnav{position:sticky;top:0;z-index:50;background:rgba(20,23,43,.82);backdrop-filter:blur(10px);border-bottom:1px solid rgba(244,236,216,.12)}
+.topnav .inner{max-width:940px;margin:0 auto;padding:12px 22px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.brand{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;color:var(--paper);text-decoration:none;font-size:16px;letter-spacing:-.01em}
+.brand::before{content:"\25C6 ";color:var(--red)}
+.navlinks{display:flex;gap:4px;flex-wrap:wrap}
+.navlinks a{font-family:"Space Mono",monospace;font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--soft-2);text-decoration:none;padding:7px 11px;border-radius:7px}
+.navlinks a:hover{color:var(--paper);background:rgba(244,236,216,.06)}
+.navlinks a.active{color:var(--gold)}
+ 
+/* ---------- HERO ---------- */
+header.hero{padding:70px 0 44px}
+.eyebrow{font-family:"Space Mono",monospace;font-size:13px;letter-spacing:.32em;text-transform:uppercase;color:var(--gold);margin:0 0 18px}
+.eyebrow::before{content:"\25C6 ";color:var(--red)}
+h1{
+  font-family:"Bricolage Grotesque",sans-serif;font-weight:800;
+  font-size:clamp(50px,10.5vw,108px);line-height:.9;margin:0;letter-spacing:-.02em;
+  background:linear-gradient(100deg,#F4ECD8 0%,#F4ECD8 30%,#8FE3FF 42%,#F4A6E8 52%,#FFD98A 62%,#F4ECD8 74%,#F4ECD8 100%);
+  background-size:220% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;
+  animation:holo 7s ease-in-out infinite;
+}
+@keyframes holo{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+.subtitle{font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:clamp(19px,3.2vw,28px);margin:8px 0 0;color:var(--paper)}
+.thesis{max-width:640px;margin:22px 0 0;color:#D9D2BE;font-size:18px}
+.thesis b{color:var(--paper)}
+ 
+.glance{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;margin:40px 0 0;background:var(--paper-line);border:1px solid var(--paper-line);border-radius:10px;overflow:hidden;box-shadow:var(--shadow)}
+.glance div{background:var(--ink-2);padding:18px 16px}
+.glance .k{font-family:"Space Mono",monospace;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--soft-2)}
+.glance .v{font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:23px;margin-top:6px;color:var(--paper)}
+.glance .v small{font-weight:400;font-size:12px;color:var(--gold);font-family:"Space Mono",monospace}
+@media(max-width:640px){.glance{grid-template-columns:repeat(2,1fr)}}
+ 
+/* ---------- PAGE HEADERS (standings / pools) ---------- */
+.page{padding-bottom:20px}
+.pagehead{padding:56px 0 34px}
+.pagetitle{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:clamp(44px,9vw,84px);line-height:.92;margin:6px 0 0;letter-spacing:-.02em;color:var(--paper)}
+.current-set{font-family:"Space Mono",monospace;font-size:13px;color:var(--soft-2);margin-top:18px;letter-spacing:.06em}
+.current-set span{color:var(--gold)}
+ 
+/* ---------- SECTIONS ---------- */
+section{padding:34px 0}
+.sec-head{display:flex;align-items:baseline;gap:16px;margin:0 0 22px;border-bottom:1px solid rgba(244,236,216,.14);padding-bottom:14px}
+.sec-no{font-family:"Space Mono",monospace;font-size:14px;color:var(--red);font-weight:700}
+h2{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:clamp(25px,4.2vw,36px);margin:0;letter-spacing:-.01em}
+.sec-intro{color:#C9C2AE;max-width:660px;margin:-6px 0 24px}
+ 
+.card{background:var(--paper);color:var(--ink);border-radius:12px;padding:26px 28px;box-shadow:var(--shadow)}
+.card + .card{margin-top:16px}
+.card h3{font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:20px;margin:0 0 8px;color:var(--ink)}
+.card p{margin:0;color:#33374d}
+.card p.note{margin-top:12px;font-size:15px;color:var(--soft)}
+.card a{color:#2b5fb0;text-decoration:none;font-weight:600}
+.card a:hover{text-decoration:underline}
+ 
+/* loop */
+.loop{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+@media(max-width:640px){.loop{grid-template-columns:1fr}}
+.step{background:var(--paper);color:var(--ink);border-radius:12px;padding:22px 22px 20px;box-shadow:var(--shadow);border-top:3px solid var(--red)}
+.step .n{font-family:"Space Mono",monospace;font-weight:700;font-size:13px;color:var(--red);letter-spacing:.1em}
+.step h3{font-family:"Bricolage Grotesque",sans-serif;font-size:19px;margin:8px 0 6px}
+.step p{margin:0;font-size:15px;color:#3a3e55}
+ 
+/* golden rule */
+.golden{background:linear-gradient(135deg,#1E2238,#191d31);border:1px solid var(--gold);border-left:5px solid var(--gold);border-radius:12px;padding:26px 28px;box-shadow:var(--shadow)}
+.golden .tag{font-family:"Space Mono",monospace;font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--gold)}
+.golden h3{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:26px;margin:8px 0 12px;color:var(--paper)}
+.golden p{margin:0;color:#D9D2BE}
+.golden .rule-pair{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:18px}
+@media(max-width:560px){.golden .rule-pair{grid-template-columns:1fr}}
+.golden .rule-pair div{background:rgba(244,236,216,.06);border-radius:9px;padding:14px 16px}
+.golden .rule-pair .yes{color:var(--grass);font-family:"Space Mono",monospace;font-size:12px;letter-spacing:.1em}
+.golden .rule-pair .no{color:var(--fire);font-family:"Space Mono",monospace;font-size:12px;letter-spacing:.1em}
+.golden .rule-pair b{color:var(--paper);display:block;margin-top:4px;font-family:"Bricolage Grotesque",sans-serif}
+.golden .rule-pair span{color:#C4BEAC;font-size:14px}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:18px}
+.chip{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-family:"Space Mono",monospace;font-weight:700;font-size:13px;color:#14172B}
+ 
+/* stat list */
+.rules-list{list-style:none;margin:0;padding:0}
+.rules-list li{display:flex;gap:16px;padding:15px 0;border-bottom:1px solid rgba(20,23,43,.10)}
+.rules-list li:last-child{border-bottom:0}
+.rules-list .lbl{font-family:"Space Mono",monospace;font-size:12px;color:#b3892a;letter-spacing:.08em;white-space:nowrap;min-width:112px;padding-top:2px;text-transform:uppercase}
+.rules-list .txt{color:#33374d}
+.rules-list .txt b{color:var(--ink)}
+ 
+/* ---------- TRACKER ---------- */
+.legend{font-family:"Familjen Grotesk";font-size:14px;color:#C9C2AE;margin:0 0 18px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.legend b{color:var(--gold)}
+.lg-dot{width:10px;height:10px;border-radius:50%;display:inline-block;vertical-align:middle}
+.lg-dot.main{background:var(--ink);border:2px solid var(--gold)}
+.lg-dot.spec{background:transparent;border:2px solid var(--soft-2)}
+.track-wrap{margin-top:4px}
+.era{border:1px solid rgba(244,236,216,.12);border-radius:12px;margin-bottom:12px;overflow:hidden;background:rgba(29,33,56,.45)}
+.era>summary{list-style:none;cursor:pointer;padding:16px 20px;display:flex;align-items:center;gap:14px;user-select:none}
+.era>summary::-webkit-details-marker{display:none}
+.era>summary:hover{background:rgba(244,236,216,.03)}
+.chev{width:9px;height:9px;border-right:2px solid var(--gold);border-bottom:2px solid var(--gold);transform:rotate(-45deg);transition:transform .2s;flex:none;margin-right:2px}
+.era[open]>summary .chev{transform:rotate(45deg)}
+.era-name{font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:18px;color:var(--paper)}
+.era-meta{font-family:"Space Mono",monospace;font-size:11px;color:var(--soft-2);letter-spacing:.08em;text-transform:uppercase;margin-left:auto;text-align:right}
+.era[open]>summary{border-bottom:1px solid rgba(244,236,216,.10)}
+.sets{padding:4px 20px 12px}
+.trow{display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid rgba(244,236,216,.05)}
+.trow:last-child{border-bottom:0}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--ink);border:2px solid var(--gold);flex:none}
+.trow.special .dot{border-color:var(--soft-2);width:8px;height:8px}
+.trow.kick .dot{background:var(--red);border-color:var(--red);box-shadow:0 0 0 4px rgba(213,58,58,.22)}
+.tname{font-family:"Familjen Grotesk";font-size:15.5px;color:var(--paper)}
+.trow.special .tname{color:#B9B3A2}
+.trow.kick .tname{font-weight:600}
+.badge{margin-left:auto;font-family:"Space Mono",monospace;font-size:10px;letter-spacing:.06em;text-transform:uppercase;padding:3px 9px;border-radius:20px;background:rgba(231,185,60,.13);color:var(--gold);border:1px solid rgba(231,185,60,.32);white-space:nowrap}
+.badge.kickbadge{background:var(--red);color:#fff;border-color:var(--red)}
+ 
+/* ordered flow */
+ol.flow{counter-reset:s;list-style:none;margin:0;padding:0}
+ol.flow li{counter-increment:s;position:relative;padding:0 0 20px 52px;color:#33374d}
+ol.flow li::before{content:counter(s);position:absolute;left:0;top:-2px;width:34px;height:34px;border-radius:8px;background:var(--ink-2);border:1px solid var(--gold);color:var(--gold);font-family:"Space Mono",monospace;font-weight:700;display:grid;place-items:center}
+ol.flow li::after{content:"";position:absolute;left:17px;top:34px;bottom:2px;width:1px;background:rgba(29,33,56,.25)}
+ol.flow li:last-child{padding-bottom:0}
+ol.flow li:last-child::after{display:none}
+ol.flow b{color:var(--ink)}
+.howto ol.flow li{color:#33374d}
+ 
+/* season points */
+.points{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:16px}
+@media(max-width:560px){.points{grid-template-columns:1fr}}
+.pt{background:var(--paper);color:var(--ink);border-radius:12px;padding:20px;text-align:center;box-shadow:var(--shadow)}
+.pt .big{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:42px;color:var(--red);line-height:1}
+.pt .lbl{font-family:"Space Mono",monospace;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--soft);margin-top:8px}
+ 
+/* ---------- STANDINGS TABLE ---------- */
+.board{width:100%;border-collapse:collapse;background:var(--paper);color:var(--ink);border-radius:12px;overflow:hidden;box-shadow:var(--shadow)}
+.board th{font-family:"Space Mono",monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;text-align:left;padding:14px 16px;background:var(--ink-2);color:var(--soft-2)}
+.board th.num{text-align:center}
+.board td{padding:15px 16px;border-bottom:1px solid var(--paper-line);color:#33374d}
+.board tr:last-child td{border-bottom:0}
+.board .rank{font-family:"Space Mono",monospace;font-weight:700;color:var(--soft);width:44px}
+.board .name{font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:17px;color:var(--ink)}
+.board td.num{text-align:center;font-family:"Space Mono",monospace}
+.board .pts{text-align:center;font-family:"Bricolage Grotesque",sans-serif;font-weight:800;color:var(--red);font-size:19px}
+.board tr.leader td{background:linear-gradient(90deg,rgba(231,185,60,.20),transparent)}
+.board tr.leader .name::after{content:" \265B";color:#b3892a}
+.board .empty{text-align:center;color:var(--soft);font-family:"Space Mono",monospace;font-size:14px}
+.tie-note{color:var(--soft-2);font-size:14px;margin-top:14px}
+ 
+.titlegrid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+@media(max-width:640px){.titlegrid{grid-template-columns:1fr}}
+.titlecard{background:var(--paper);color:var(--ink);border-radius:11px;padding:18px 20px;box-shadow:var(--shadow);border-left:4px solid var(--gold)}
+.tera{font-family:"Space Mono",monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--soft)}
+.tchamp{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:20px;color:var(--ink);margin-top:4px}
+.empty2{color:var(--soft-2);font-family:"Space Mono",monospace;font-size:14px;margin:0}
+ 
+/* ---------- POOLS ---------- */
+.poolgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+@media(max-width:640px){.poolgrid{grid-template-columns:1fr}}
+.pool{background:var(--paper);color:var(--ink);border-radius:12px;padding:20px 22px;box-shadow:var(--shadow)}
+.pool h3{font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:20px;margin:0;color:var(--ink)}
+.pool .count{font-family:"Space Mono",monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--soft-2);margin:4px 0 10px}
+.pull{display:flex;gap:12px;padding:9px 0;border-bottom:1px solid var(--paper-line);align-items:baseline}
+.pull:last-child{border-bottom:0}
+.pull .pset{font-family:"Familjen Grotesk";font-weight:600;color:var(--ink);min-width:120px;flex:none}
+.pull a{color:#2b5fb0;text-decoration:none;font-family:"Space Mono",monospace;font-size:12.5px;word-break:break-all}
+.pull a:hover{text-decoration:underline}
+ 
+/* ---------- FOOTER ---------- */
+footer{padding:52px 0 44px;border-top:1px solid rgba(244,236,216,.14);margin-top:28px;color:var(--soft-2);font-size:14px}
+footer .mono{color:var(--soft-2)}
+footer a{color:var(--gold);text-decoration:none}
+footer p{margin:6px 0}
+.disc{font-size:12px;color:var(--soft);margin-top:18px;max-width:660px}
+ 
+@media(prefers-reduced-motion:reduce){h1{animation:none}.chev{transition:none}}
+ 
+</style>
 </head>
 <body><nav class="topnav"><div class="inner">
   <a class="brand" href="index.html">Progression League</a>
@@ -26,7 +322,7 @@
       <div><div class="k">Arena</div><div class="v">TTS <small>tabletop sim</small></div></div>
     </div>
   </header>
-
+ 
   <section id="loop">
     <div class="sec-head"><span class="sec-no">01</span><h2>The Loop</h2></div>
     <div class="loop">
@@ -36,7 +332,7 @@
       <div class="step"><div class="n">STEP 04</div><h3>Battle</h3><p>Run the night's Swiss rounds in TTS. Log results to the Standings board, then queue up the next set.</p></div>
     </div>
   </section>
-
+ 
   <section id="energy">
     <div class="sec-head"><span class="sec-no">02</span><h2>The Golden Rule</h2></div>
     <div class="golden">
@@ -57,7 +353,7 @@
       </div>
     </div>
   </section>
-
+ 
   <section id="deck">
     <div class="sec-head"><span class="sec-no">03</span><h2>Deckbuilding</h2></div>
     <div class="card">
@@ -71,7 +367,7 @@
       </ul>
     </div>
   </section>
-
+ 
   <section id="battle">
     <div class="sec-head"><span class="sec-no">04</span><h2>Battle Rules</h2></div>
     <div class="card">
@@ -83,7 +379,7 @@
       </ul>
     </div>
   </section>
-
+ 
   <section id="track">
     <div class="sec-head"><span class="sec-no">05</span><h2>The Season Track</h2></div>
     <p class="sec-intro">Every English set, in release order. Tap an era to expand it. You are marching from Base Set to the present &mdash; 127 main sets plus 25 special sets along the way.</p>
@@ -283,7 +579,7 @@
 </div></details>
     </div>
   </section>
-
+ 
   <section id="season">
     <div class="sec-head"><span class="sec-no">06</span><h2>The Season</h2></div>
     <div class="card">
@@ -301,7 +597,7 @@
       <p>At the close of each era on the Season Track, the <b>top two on points play a Bo3 final</b> for that era's title. Reset nothing; points roll onward. Win the most era titles and you take the overall crown when the progression ends.</p>
     </div>
   </section>
-
+ 
   <section id="tts">
     <div class="sec-head"><span class="sec-no">07</span><h2>Tabletop Simulator Setup</h2></div>
     <div class="card">
