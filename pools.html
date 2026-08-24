@@ -207,6 +207,31 @@ footer p{margin:6px 0}
 .refresh{margin-left:12px;font-family:"Space Mono",monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);background:transparent;border:1px solid rgba(231,185,60,.4);border-radius:20px;padding:4px 11px;cursor:pointer;vertical-align:middle}
 .refresh:hover{background:rgba(231,185,60,.12)}
 
+/* live sync + collapsible trainer pools + card grids */
+.synced{font-family:"Space Mono",monospace;font-size:11px;color:var(--soft-2);margin-top:10px}
+.pool-details{background:var(--paper);color:var(--ink);border-radius:12px;box-shadow:var(--shadow);margin-bottom:14px;overflow:hidden}
+.pool-details>summary{list-style:none;cursor:pointer;padding:18px 22px;display:flex;align-items:center;gap:12px;user-select:none}
+.pool-details>summary::-webkit-details-marker{display:none}
+.pool-details>summary:hover{background:rgba(20,23,43,.04)}
+.pchev{width:9px;height:9px;border-right:2px solid var(--red);border-bottom:2px solid var(--red);transform:rotate(-45deg);transition:transform .2s;flex:none}
+.pool-details[open]>summary .pchev{transform:rotate(45deg)}
+.pname{font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:20px;color:var(--ink)}
+.pmeta{font-family:"Space Mono",monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--soft-2);margin-left:auto;text-align:right}
+.pool-body{padding:2px 22px 20px}
+.setblock{margin-top:16px}
+.setblock:first-child{margin-top:6px}
+.setblock h4{font-family:"Bricolage Grotesque",sans-serif;font-size:15px;margin:0 0 10px;color:var(--ink);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.setblock h4 .sub{font-family:"Space Mono",monospace;font-size:11px;color:var(--soft);font-weight:400;letter-spacing:.04em;text-transform:uppercase}
+.setblock h4 a{font-family:"Space Mono",monospace;font-size:11px;color:#2b5fb0;text-decoration:none}
+.setblock h4 a:hover{text-decoration:underline}
+.cardgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(66px,1fr));gap:8px}
+.carditem{position:relative;display:block;border-radius:5px;overflow:hidden;line-height:0;box-shadow:0 2px 6px -2px rgba(0,0,0,.4)}
+.carditem img{width:100%;height:auto;display:block;border-radius:5px}
+.carditem .qty{position:absolute;right:3px;bottom:3px;background:rgba(20,23,43,.92);color:var(--gold);font-family:"Space Mono",monospace;font-size:10px;font-weight:700;padding:1px 6px;border-radius:10px;line-height:1.5}
+.loadingcards{font-family:"Space Mono",monospace;font-size:12px;color:var(--soft);padding:6px 0}
+.fallback{font-family:"Space Mono",monospace;font-size:12px}
+.fallback a{color:#2b5fb0;word-break:break-all}
+
 </style>
 </head>
 <body><nav class="topnav"><div class="inner">
@@ -217,7 +242,7 @@ footer p{margin:6px 0}
   <header class="pagehead">
     <p class="eyebrow">The Vault · Anti-cheat</p>
     <h1 class="pagetitle">Card Pools</h1>
-    <p class="thesis">The single source of truth for what everyone owns. Every share-link is a frozen snapshot of exactly what a player pulled &mdash; decks are audited against these. If a card isn't in your logged pool, it can't be in your deck. Pulled live from the league spreadsheet.</p>
+    <p class="thesis">The single source of truth for what everyone owns. Every share-link is a frozen snapshot of exactly what a player pulled &mdash; open a trainer to see their actual cards. If a card isn't here, it can't be in their deck.</p>
     <p class="current-set">Current set: <span id="curset">…</span> <button id="refresh" class="refresh">&#8635; Refresh</button></p>
   </header>
 
@@ -225,23 +250,23 @@ footer p{margin:6px 0}
     <div class="card howto">
       <h3>How to log your pulls</h3>
       <ol class="flow">
-        <li>Right after opening, click <b>Share your Pulls &rarr; Copy Link</b> in the sim. That link is a permanent snapshot of exactly what you pulled that session.</li>
+        <li>Right after opening, click <b>Share your Pulls &rarr; Copy Link</b> in the sim &mdash; a permanent snapshot of that session's pulls.</li>
         <li>Drop the link where your group collects them (a Discord channel works well), tagged with your name and the set.</li>
-        <li>The Commissioner pastes each link into the league <b>Google Sheet</b> &mdash; the player's row, the column for that set. This page reads the sheet live, so it updates on its own.</li>
+        <li>The Commissioner pastes each link into the league <b>Google Sheet</b> &mdash; the player's row, the column for that set. This page reads it live and renders the cards.</li>
       </ol>
-      <p class="note">You don't need GitHub or spreadsheet access to take part &mdash; you just share links, and one person keeps the sheet.</p>
+      <p class="note">Card images are pulled from the share link on demand, so opening a trainer for the first time takes a moment.</p>
     </div>
   </section>
 
   <section>
     <div class="sec-head"><span class="sec-no">&#9670;</span><h2>The Trainers</h2></div>
-    <div id="pools" class="poolgrid"><p class="empty2">Loading…</p></div>
+    <div id="pools"><p class="empty2">Loading…</p></div>
   </section>
 </div>
 
 <script>
 /* ===== Paste your Google Sheet ID between the quotes (see setup notes). ===== */
-const SHEET_ID = "1EfbocEaH9PvIiHBsTHhLjDv0tE6GWs_dkBI17VkGmIs";
+const SHEET_ID = "PASTE_YOUR_SHEET_ID_HERE";
 
 function parseCSV(t){
   const rows=[]; let row=[], cur='', q=false;
@@ -257,12 +282,44 @@ function parseCSV(t){
   return rows;
 }
 function gviz(tab){
-  const u='https://docs.google.com/spreadsheets/d/'+SHEET_ID+'/gviz/tq?tqx=out:csv&sheet='+encodeURIComponent(tab)+'&_='+Date.now();
+  const u='https://docs.google.com/spreadsheets/d/'+SHEET_ID+'/gviz/tq?tqx=out:csv&headers=1&sheet='+encodeURIComponent(tab)+'&_='+Date.now()+Math.random();
   return fetch(u,{cache:'no-store'}).then(r=>{ if(!r.ok) throw new Error('http '+r.status); return r.text(); }).then(parseCSV);
 }
 function esc(s){ return (s==null?'':(''+s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function num(v){ v=(v==null?'':(''+v)).trim(); return (v===''||isNaN(+v))?0:+v; }
 
+/* fetch a pokemoncard.io share page through a CORS proxy, then parse its cards */
+const PROXIES=[
+  u=>'https://api.allorigins.win/raw?url='+encodeURIComponent(u),
+  u=>'https://corsproxy.io/?url='+encodeURIComponent(u),
+  u=>'https://thingproxy.freeboard.io/fetch/'+u
+];
+async function fetchShare(url){
+  for(const mk of PROXIES){
+    try{
+      const r=await fetch(mk(url),{cache:'no-store'});
+      if(!r.ok) continue;
+      const t=await r.text();
+      if(t && t.indexOf('images.pokemoncard.io')>-1) return t;
+    }catch(e){}
+  }
+  throw new Error('all proxies failed');
+}
+function parseShare(html){
+  const doc=new DOMParser().parseFromString(html,'text/html');
+  const cards=[];
+  doc.querySelectorAll('a[href*="/card/"]').forEach(a=>{
+    const img=a.querySelector('img'); if(!img) return;
+    const src=img.getAttribute('src')||''; if(src.indexOf('images.pokemoncard.io')<0) return;
+    const count=parseInt(((a.textContent||'').match(/\d+/)||['1'])[0])||1;
+    let href=a.getAttribute('href')||'';
+    if(href && !/^https?:/.test(href)) href='https://pokemoncard.io'+href;
+    cards.push({img:src, count, title:a.getAttribute('title')||img.getAttribute('alt')||'', href});
+  });
+  return cards;
+}
+
+let ROSTER=[];
 async function load(){
   const grid=document.getElementById('pools');
   const csEl=document.getElementById('curset');
@@ -276,14 +333,41 @@ async function load(){
     const pIdx=hd.findIndex(h=>h.toLowerCase()==='player');
     const fixed=new Set(['player','played','won','lost','pts','points']);
     const setCols=hd.map((h,i)=>({name:h,i})).filter(c=>c.name&&!fixed.has(c.name.toLowerCase()));
-    const players=rows.slice(1).filter(r=> pIdx>-1 && (r[pIdx]||'').trim());
-    grid.innerHTML = players.length ? players.map(r=>{
-      const name=(r[pIdx]||'').trim();
-      const pulls=setCols.map(c=>({set:c.name,url:(r[c.i]||'').trim()})).filter(x=>x.url);
-      const inner = pulls.length ? pulls.map(x=>`<div class="pull"><span class="pset">${esc(x.set)}</span><a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.url)}</a></div>`).join('') : `<p class="empty2">No pulls logged yet.</p>`;
-      return `<div class="pool"><h3>${esc(name)}</h3><div class="count">${pulls.length} set${pulls.length===1?'':'s'} logged</div><div class="pulls">${inner}</div></div>`;
-    }).join('') : `<p class="empty2">No trainers in the sheet yet.</p>`;
+    ROSTER=rows.slice(1).filter(r=> pIdx>-1 && (r[pIdx]||'').trim()).map(r=>({
+      name:(r[pIdx]||'').trim(),
+      pulls:setCols.map(c=>({set:c.name,url:(r[c.i]||'').trim()})).filter(x=>x.url)
+    }));
+    if(!ROSTER.length){ grid.innerHTML=`<p class="empty2">No trainers in the sheet yet.</p>`; return; }
+    grid.innerHTML=ROSTER.map((t,ti)=>`
+      <details class="pool-details" data-ti="${ti}">
+        <summary><span class="pchev"></span><span class="pname">${esc(t.name)}</span><span class="pmeta">${t.pulls.length} set${t.pulls.length===1?'':'s'} logged</span></summary>
+        <div class="pool-body" data-loaded="0">${t.pulls.length?'<p class="loadingcards">Open to load cards…</p>':'<p class="empty2">No pulls logged yet.</p>'}</div>
+      </details>`).join('');
+    document.querySelectorAll('details.pool-details').forEach(d=>{
+      d.addEventListener('toggle',()=>{ if(d.open) loadTrainer(d); });
+    });
   }catch(e){ grid.innerHTML=`<p class="empty2">Couldn't reach the sheet. Make sure it's shared &ldquo;Anyone with the link &middot; Viewer&rdquo; and has a tab named <b>Standings</b>.</p>`; }
+}
+async function loadTrainer(d){
+  const body=d.querySelector('.pool-body');
+  if(body.getAttribute('data-loaded')!=='0') return;
+  body.setAttribute('data-loaded','1');
+  const t=ROSTER[+d.getAttribute('data-ti')];
+  if(!t || !t.pulls.length) return;
+  body.innerHTML=t.pulls.map((p,pi)=>`<div class="setblock" data-pi="${pi}"><h4>${esc(p.set)} <span class="sub loadingcards">loading…</span></h4><div class="cardgrid"></div></div>`).join('');
+  for(let pi=0; pi<t.pulls.length; pi++){
+    const p=t.pulls[pi];
+    const block=body.querySelector(`.setblock[data-pi="${pi}"]`);
+    try{
+      const cards=parseShare(await fetchShare(p.url));
+      const total=cards.reduce((s,c)=>s+c.count,0);
+      block.querySelector('h4').innerHTML=`${esc(p.set)} <span class="sub">${cards.length} unique &middot; ${total} cards</span> <a href="${esc(p.url)}" target="_blank" rel="noopener">open ↗</a>`;
+      block.querySelector('.cardgrid').innerHTML=cards.map(c=>`<a class="carditem" href="${esc(c.href||p.url)}" target="_blank" rel="noopener" title="${esc(c.title)}"><img loading="lazy" src="${esc(c.img)}" alt="${esc(c.title)}">${c.count>1?`<span class="qty">×${c.count}</span>`:''}</a>`).join('');
+    }catch(e){
+      block.querySelector('h4').innerHTML=`${esc(p.set)}`;
+      block.querySelector('.cardgrid').outerHTML=`<p class="fallback">Couldn't auto-load cards — <a href="${esc(p.url)}" target="_blank" rel="noopener">view the pulls ↗</a></p>`;
+    }
+  }
 }
 document.getElementById('refresh').addEventListener('click',load);
 load();
