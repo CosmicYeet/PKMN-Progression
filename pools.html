@@ -231,6 +231,8 @@ footer p{margin:6px 0}
 .loadingcards{font-family:"Space Mono",monospace;font-size:12px;color:var(--soft);padding:6px 0}
 .fallback{font-family:"Space Mono",monospace;font-size:12px}
 .fallback a{color:#2b5fb0;word-break:break-all}
+.collmeta{font-family:"Space Mono",monospace;font-size:12px;color:var(--soft);margin:4px 0 12px;letter-spacing:.03em}
+.collmeta b{color:var(--ink)}
 
 </style>
 </head>
@@ -242,7 +244,7 @@ footer p{margin:6px 0}
   <header class="pagehead">
     <p class="eyebrow">The Vault · Anti-cheat</p>
     <h1 class="pagetitle">Card Pools</h1>
-    <p class="thesis">The single source of truth for what everyone owns. Every share-link is a frozen snapshot of exactly what a player pulled &mdash; open a trainer to see their actual cards. If a card isn't here, it can't be in their deck.</p>
+    <p class="thesis">The single source of truth for what everyone owns. Open a trainer to see their whole collection &mdash; every card they've pulled across all sessions, with a running copy count. If a card isn't here, it can't be in their deck.</p>
     <p class="current-set">Current set: <span id="curset">…</span> <button id="refresh" class="refresh">&#8635; Refresh</button></p>
   </header>
 
@@ -254,7 +256,7 @@ footer p{margin:6px 0}
         <li>Drop the link where your group collects them (a Discord channel works well), tagged with your name and the set.</li>
         <li>The Commissioner pastes each link into the league <b>Google Sheet</b> &mdash; the player's row, the column for that set. This page reads it live and renders the cards.</li>
       </ol>
-      <p class="note">Card images are pulled from the share link on demand, so opening a trainer for the first time takes a moment.</p>
+      <p class="note">Cards load from the share links when you open a trainer, so the first open takes a moment. Counts are summed across every session that player has logged.</p>
     </div>
   </section>
 
@@ -267,6 +269,9 @@ footer p{margin:6px 0}
 <script>
 /* ===== Paste your Google Sheet ID between the quotes (see setup notes). ===== */
 const SHEET_ID = "1EfbocEaH9PvIiHBsTHhLjDv0tE6GWs_dkBI17VkGmIs";
+/* Optional but recommended for reliable card images: your Apps Script proxy /exec URL
+   (see cors-proxy.gs). Leave "" to use public proxies only. */
+const PROXY_URL = "https://script.google.com/macros/s/AKfycbwKB-ftfegK8vgvPeHoRoaMjHZQLAx9cK1cAC8BPcc5432ARZMJXOlaWq1buSIqruWx/exec";
 
 function parseCSV(t){
   const rows=[]; let row=[], cur='', q=false;
@@ -288,18 +293,25 @@ function gviz(tab){
 function esc(s){ return (s==null?'':(''+s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function num(v){ v=(v==null?'':(''+v)).trim(); return (v===''||isNaN(+v))?0:+v; }
 
-/* fetch a pokemoncard.io share page through a CORS proxy, then parse its cards */
-const PROXIES=[
-  u=>'https://api.allorigins.win/raw?url='+encodeURIComponent(u),
-  u=>'https://corsproxy.io/?url='+encodeURIComponent(u),
-  u=>'https://thingproxy.freeboard.io/fetch/'+u
-];
+/* fetch a pokemoncard.io share page: your Apps Script proxy first (if set),
+   then public proxies, each with a hard timeout so a dead one can't hang us. */
 async function fetchShare(url){
-  for(const mk of PROXIES){
+  const builders=[];
+  if(typeof PROXY_URL!=='undefined' && PROXY_URL){
+    builders.push({u:x=>PROXY_URL+(PROXY_URL.indexOf('?')>-1?'&':'?')+'url='+encodeURIComponent(x)});
+  }
+  builders.push({u:x=>'https://api.codetabs.com/v1/proxy/?quest='+encodeURIComponent(x)});
+  builders.push({u:x=>'https://api.allorigins.win/raw?url='+encodeURIComponent(x)});
+  builders.push({u:x=>'https://api.allorigins.win/get?url='+encodeURIComponent(x), json:true});
+  builders.push({u:x=>'https://corsproxy.io/?url='+encodeURIComponent(x)});
+  for(const b of builders){
     try{
-      const r=await fetch(mk(url),{cache:'no-store'});
+      const ctrl=new AbortController(); const to=setTimeout(()=>ctrl.abort(),9000);
+      const r=await fetch(b.u(url),{cache:'no-store',signal:ctrl.signal});
+      clearTimeout(to);
       if(!r.ok) continue;
-      const t=await r.text();
+      let t=await r.text();
+      if(b.json){ try{ t=(JSON.parse(t).contents)||''; }catch(e){ continue; } }
       if(t && t.indexOf('images.pokemoncard.io')>-1) return t;
     }catch(e){}
   }
@@ -314,7 +326,9 @@ function parseShare(html){
     const count=parseInt(((a.textContent||'').match(/\d+/)||['1'])[0])||1;
     let href=a.getAttribute('href')||'';
     if(href && !/^https?:/.test(href)) href='https://pokemoncard.io'+href;
-    cards.push({img:src, count, title:a.getAttribute('title')||img.getAttribute('alt')||'', href});
+    const m=src.match(/images\/([^/]+)\/[^/]+?-(\d+)\.png/);
+    cards.push({img:src, count, title:a.getAttribute('title')||img.getAttribute('alt')||'', href,
+                code:m?m[1]:'zzz', num:m?parseInt(m[2]):9999});
   });
   return cards;
 }
@@ -340,8 +354,8 @@ async function load(){
     if(!ROSTER.length){ grid.innerHTML=`<p class="empty2">No trainers in the sheet yet.</p>`; return; }
     grid.innerHTML=ROSTER.map((t,ti)=>`
       <details class="pool-details" data-ti="${ti}">
-        <summary><span class="pchev"></span><span class="pname">${esc(t.name)}</span><span class="pmeta">${t.pulls.length} set${t.pulls.length===1?'':'s'} logged</span></summary>
-        <div class="pool-body" data-loaded="0">${t.pulls.length?'<p class="loadingcards">Open to load cards…</p>':'<p class="empty2">No pulls logged yet.</p>'}</div>
+        <summary><span class="pchev"></span><span class="pname">${esc(t.name)}</span><span class="pmeta">${t.pulls.length} session${t.pulls.length===1?'':'s'} logged</span></summary>
+        <div class="pool-body" data-loaded="0">${t.pulls.length?'<p class="loadingcards">Open to load collection…</p>':'<p class="empty2">No pulls logged yet.</p>'}</div>
       </details>`).join('');
     document.querySelectorAll('details.pool-details').forEach(d=>{
       d.addEventListener('toggle',()=>{ if(d.open) loadTrainer(d); });
@@ -354,20 +368,29 @@ async function loadTrainer(d){
   body.setAttribute('data-loaded','1');
   const t=ROSTER[+d.getAttribute('data-ti')];
   if(!t || !t.pulls.length) return;
-  body.innerHTML=t.pulls.map((p,pi)=>`<div class="setblock" data-pi="${pi}"><h4>${esc(p.set)} <span class="sub loadingcards">loading…</span></h4><div class="cardgrid"></div></div>`).join('');
-  for(let pi=0; pi<t.pulls.length; pi++){
-    const p=t.pulls[pi];
-    const block=body.querySelector(`.setblock[data-pi="${pi}"]`);
+  body.innerHTML=`<p class="loadingcards">Loading collection from ${t.pulls.length} session${t.pulls.length===1?'':'s'}…</p>`;
+  const agg=new Map(); let ok=0; const failed=[];
+  for(const p of t.pulls){
     try{
-      const cards=parseShare(await fetchShare(p.url));
-      const total=cards.reduce((s,c)=>s+c.count,0);
-      block.querySelector('h4').innerHTML=`${esc(p.set)} <span class="sub">${cards.length} unique &middot; ${total} cards</span> <a href="${esc(p.url)}" target="_blank" rel="noopener">open ↗</a>`;
-      block.querySelector('.cardgrid').innerHTML=cards.map(c=>`<a class="carditem" href="${esc(c.href||p.url)}" target="_blank" rel="noopener" title="${esc(c.title)}"><img loading="lazy" src="${esc(c.img)}" alt="${esc(c.title)}">${c.count>1?`<span class="qty">×${c.count}</span>`:''}</a>`).join('');
-    }catch(e){
-      block.querySelector('h4').innerHTML=`${esc(p.set)}`;
-      block.querySelector('.cardgrid').outerHTML=`<p class="fallback">Couldn't auto-load cards — <a href="${esc(p.url)}" target="_blank" rel="noopener">view the pulls ↗</a></p>`;
-    }
+      const cards=parseShare(await fetchShare(p.url)); ok++;
+      cards.forEach(c=>{
+        const key=c.code+'-'+c.num;
+        if(agg.has(key)) agg.get(key).count+=c.count;
+        else agg.set(key,{img:c.img,title:c.title,href:c.href,count:c.count,code:c.code,num:c.num});
+      });
+    }catch(e){ failed.push(p); }
   }
+  const cards=[...agg.values()].sort((a,b)=> a.code<b.code?-1 : a.code>b.code?1 : a.num-b.num);
+  if(!cards.length){
+    body.innerHTML=`<p class="fallback">Couldn't auto-load the cards for this trainer. Their share links: `+
+      t.pulls.map(p=>`<a href="${esc(p.url)}" target="_blank" rel="noopener">${esc(p.set)} ↗</a>`).join(' &middot; ')+`</p>`;
+    return;
+  }
+  const totalCopies=cards.reduce((s,c)=>s+c.count,0);
+  let head=`<div class="collmeta"><b>${cards.length}</b> unique &middot; <b>${totalCopies}</b> total copies &middot; ${ok}/${t.pulls.length} sessions loaded</div>`;
+  if(failed.length) head+=`<p class="fallback">Couldn't load: `+failed.map(p=>`<a href="${esc(p.url)}" target="_blank" rel="noopener">${esc(p.set)} ↗</a>`).join(' &middot; ')+`</p>`;
+  const gridHTML=cards.map(c=>`<a class="carditem" href="${esc(c.href)}" target="_blank" rel="noopener" title="${esc(c.title)} (×${c.count})"><img loading="lazy" src="${esc(c.img)}" alt="${esc(c.title)}"><span class="qty">×${c.count}</span></a>`).join('');
+  body.innerHTML=head+`<div class="cardgrid">${gridHTML}</div>`;
 }
 document.getElementById('refresh').addEventListener('click',load);
 load();
