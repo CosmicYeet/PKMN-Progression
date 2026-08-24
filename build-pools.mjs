@@ -8,7 +8,7 @@
 import { parse } from 'node-html-parser';
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 
-const SHEET_ID = 'PASTE_YOUR_SHEET_ID_HERE';   // <-- same id as in your HTML
+const SHEET_ID = '1EfbocEaH9PvIiHBsTHhLjDv0tE6GWs_dkBI17VkGmIs';   // <-- same id as in your HTML
 
 const gviz = (tab) =>
   `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&headers=1&sheet=${encodeURIComponent(tab)}`;
