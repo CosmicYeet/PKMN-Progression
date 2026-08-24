@@ -154,8 +154,9 @@ ol.flow b{color:var(--ink)}
 .howto ol.flow li{color:#33374d}
 
 /* season points */
-.points{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:16px}
-@media(max-width:560px){.points{grid-template-columns:1fr}}
+.points{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:16px}
+@media(max-width:700px){.points{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:440px){.points{grid-template-columns:1fr}}
 .pt{background:var(--paper);color:var(--ink);border-radius:12px;padding:20px;text-align:center;box-shadow:var(--shadow)}
 .pt .big{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:42px;color:var(--red);line-height:1}
 .pt .lbl{font-family:"Space Mono",monospace;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--soft);margin-top:8px}
@@ -275,7 +276,7 @@ footer p{margin:6px 0}
         <li><span class="lbl">As printed</span><span class="txt">Play cards by their <b>era's text</b> &mdash; in Base&ndash;Neo, Weakness <b>doubles</b> damage (&times;2, not +30) and Trainers have <b>no once-per-turn limit</b>.</span></li>
         <li><span class="lbl">Turn 1</span><span class="txt">House rule: the player going first <b>doesn't draw and can't attack</b> on their first turn.</span></li>
         <li><span class="lbl">Win by</span><span class="txt">Take all <b>6 Prizes</b>, leave the opponent with <b>no Pok&eacute;mon in play</b>, or <b>deck them out</b> at the start of their turn.</span></li>
-        <li><span class="lbl">Match</span><span class="txt"><b>Best of one</b> per Swiss pairing to keep nights moving. Bump to Bo3 for era-championship finals.</span></li>
+        <li><span class="lbl">Match</span><span class="txt"><b>Best of three</b> per Swiss pairing. The first player to win 2 games wins the match.</span></li>
       </ul>
     </div>
   </section>
@@ -485,12 +486,13 @@ footer p{margin:6px 0}
     <div class="card">
       <h3>Swiss pairings, points that carry</h3>
       <p>With a full table a round-robin is too many games. Each night, pair players by current record (<b>Swiss</b>) and run <b>3 rounds</b> so games stay competitive. Points accumulate across the entire progression into the running <a href="standings.html">Standings board</a>.</p>
-      <p class="note">A <b>win is 3 points, a loss 0</b>. Untimed Pok&eacute;mon effectively never ties, so there's no draw score. Odd turnout? One player takes a <b>bye</b> each round, counted as a win. If you ever play on a clock, break a timed-out game on <b>prizes taken</b>, then a sudden-death prize.</p>
+      <p class="note">Match points reward both winning and taking games: a <b>2&ndash;0 win earns 3</b>, a <b>2&ndash;1 win earns 2</b>, a <b>1&ndash;2 loss earns 1</b>, and a <b>0&ndash;2 loss earns 0</b>. Untimed Pok&eacute;mon effectively never ties, so there is no draw score. Odd turnout? One player takes a <b>bye</b>, recorded as a 2&ndash;0 win for 3 points. If you ever play on a clock, break a timed-out game on <b>prizes taken</b>, then a sudden-death prize.</p>
     </div>
     <div class="points">
-      <div class="pt"><div class="big">3</div><div class="lbl">Win</div></div>
-      <div class="pt"><div class="big">0</div><div class="lbl">Loss</div></div>
-      <div class="pt"><div class="big">B</div><div class="lbl">Bye = Win</div></div>
+      <div class="pt"><div class="big">3</div><div class="lbl">2&ndash;0 Victory</div></div>
+      <div class="pt"><div class="big">2</div><div class="lbl">2&ndash;1 Victory</div></div>
+      <div class="pt"><div class="big">1</div><div class="lbl">1&ndash;2 Loss</div></div>
+      <div class="pt"><div class="big">0</div><div class="lbl">0&ndash;2 Loss</div></div>
     </div>
     <div class="card" style="margin-top:16px">
       <h3>Era Championships</h3>
