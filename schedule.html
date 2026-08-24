@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Schedule — Progression League</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Familjen+Grotesk:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#14172B;--ink-2:#1D2138;--paper:#F4ECD8;--paper-line:#E4D8B8;--red:#D53A3A;--gold:#E7B93C;--soft:#4B4F6B;--soft-2:#6E7290;--shadow:0 18px 40px -22px rgba(0,0,0,.55)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ink);color:var(--paper);font-family:"Familjen Grotesk",system-ui,sans-serif;font-size:17px;line-height:1.6;-webkit-font-smoothing:antialiased;background-image:radial-gradient(circle at 18% -4%,rgba(213,58,58,.14),transparent 45%),radial-gradient(circle at 92% 2%,rgba(231,185,60,.10),transparent 40%);background-attachment:fixed}
+.wrap{max-width:940px;margin:0 auto;padding:0 22px}
+.topnav{position:sticky;top:0;z-index:50;background:rgba(20,23,43,.82);backdrop-filter:blur(10px);border-bottom:1px solid rgba(244,236,216,.12)}
+.topnav .inner{max-width:940px;margin:0 auto;padding:12px 22px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.brand{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;color:var(--paper);text-decoration:none;font-size:16px}.brand::before{content:"◆ ";color:var(--red)}
+.navlinks{display:flex;gap:4px;flex-wrap:wrap}.navlinks a{font-family:"Space Mono",monospace;font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--soft-2);text-decoration:none;padding:7px 11px;border-radius:7px}.navlinks a:hover{color:var(--paper);background:rgba(244,236,216,.06)}.navlinks a.active{color:var(--gold)}
+.page{padding-bottom:28px}.pagehead{padding:56px 0 34px}.eyebrow{font-family:"Space Mono",monospace;font-size:13px;letter-spacing:.32em;text-transform:uppercase;color:var(--gold);margin:0 0 18px}.eyebrow::before{content:"◆ ";color:var(--red)}
+h1{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:clamp(44px,9vw,84px);line-height:.92;margin:6px 0 0;letter-spacing:-.02em}.thesis{max-width:650px;margin:22px 0 0;color:#D9D2BE;font-size:18px}
+.syncrow{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:18px}.synced{font-family:"Space Mono",monospace;font-size:11px;color:var(--soft-2)}
+.refresh{font-family:"Space Mono",monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);background:transparent;border:1px solid rgba(231,185,60,.4);border-radius:20px;padding:5px 11px;cursor:pointer}.refresh:hover{background:rgba(231,185,60,.12)}
+.schedule{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;padding:8px 0 36px}
+.week{background:var(--paper);color:var(--ink);border-radius:12px;overflow:hidden;box-shadow:var(--shadow)}
+.weekhead{background:var(--ink-2);color:var(--paper);padding:16px 20px;display:flex;align-items:baseline;justify-content:space-between;gap:12px}.weekhead h2{font-family:"Bricolage Grotesque",sans-serif;font-size:24px;margin:0}.weekhead span{font-family:"Space Mono",monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--gold)}
+.pairings{padding:6px 20px 12px}.pairing{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid var(--paper-line)}.pairing:last-child{border-bottom:0}.player{font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:17px}.player:last-child{text-align:right}.vs{font-family:"Space Mono",monospace;font-size:10px;color:var(--red);font-weight:700}
+.empty{grid-column:1/-1;background:var(--paper);color:var(--soft);border-radius:12px;padding:26px;font-family:"Space Mono",monospace;font-size:13px}
+footer{padding:44px 0;border-top:1px solid rgba(244,236,216,.14);color:var(--soft-2);font-size:14px}footer a{color:var(--gold);text-decoration:none}.mono{font-family:"Space Mono",monospace}.disc{font-size:12px;color:var(--soft);max-width:660px}
+@media(max-width:680px){.schedule{grid-template-columns:1fr}.topnav .inner{align-items:flex-start}.navlinks{width:100%}.navlinks a{padding-left:7px;padding-right:7px}}
+</style>
+</head>
+<body>
+<nav class="topnav"><div class="inner">
+<a class="brand" href="index.html">Progression League</a>
+<div class="navlinks"><a href="index.html">Rulebook</a><a href="standings.html">Standings</a><a href="schedule.html" class="active">Schedule</a><a href="pools.html">Card Pools</a></div>
+</div></nav>
+<div class="wrap page">
+<header class="pagehead">
+<p class="eyebrow">League Rotation</p>
+<h1>Schedule</h1>
+<p class="thesis">Weekly matchups pulled live from the league spreadsheet. Each week is grouped together so everyone can quickly find their pairings.</p>
+<div class="syncrow"><span class="synced" id="synced">Loading…</span><button id="refresh" class="refresh" type="button">↻ Refresh</button></div>
+</header>
+<main id="schedule" class="schedule"><p class="empty">Loading schedule…</p></main>
+</div>
+<script>
+const SHEET_ID='1EfbocEaH9PvIiHBsTHhLjDv0tE6GWs_dkBI17VkGmIs';
+function parseCSV(t){
+  const rows=[];let row=[],cur='',q=false;
+  for(let i=0;i<t.length;i++){const c=t[i];
+    if(q){if(c==='"'){if(t[i+1]==='"'){cur+='"';i++;}else q=false;}else cur+=c;}
+    else if(c==='"')q=true;
+    else if(c===','){row.push(cur);cur='';}
+    else if(c==='\n'){row.push(cur);rows.push(row);row=[];cur='';}
+    else if(c!=='\r')cur+=c;
+  }
+  if(cur!==''||row.length){row.push(cur);rows.push(row);}return rows;
+}
+function esc(s){return (s==null?'':String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+async function load(){
+  const el=document.getElementById('schedule'),sync=document.getElementById('synced');
+  sync.textContent='Refreshing…';
+  try{
+    const url='https://docs.google.com/spreadsheets/d/'+SHEET_ID+'/gviz/tq?tqx=out:csv&headers=1&sheet=Rotation&range=E:G&_='+Date.now();
+    const res=await fetch(url,{cache:'no-store'});
+    if(!res.ok)throw new Error('Sheet request failed');
+    const rows=parseCSV(await res.text()).slice(1);
+    const weeks=new Map();
+    for(const row of rows){
+      const week=(row[0]||'').trim(),p1=(row[1]||'').trim(),p2=(row[2]||'').trim();
+      if(!week||!p1||!p2)continue;
+      if(!weeks.has(week))weeks.set(week,[]);
+      weeks.get(week).push({p1,p2});
+    }
+    const ordered=[...weeks.entries()].sort((a,b)=>{
+      const an=Number(a[0]),bn=Number(b[0]);
+      return Number.isFinite(an)&&Number.isFinite(bn)?an-bn:a[0].localeCompare(b[0],undefined,{numeric:true});
+    });
+    if(!ordered.length){el.innerHTML='<p class="empty">No pairings found. Add week numbers in Column E and player names in Columns F and G on the Rotation sheet.</p>';}
+    else{el.innerHTML=ordered.map(([week,games])=>`<section class="week"><div class="weekhead"><h2>Week ${esc(week)}</h2><span>${games.length} matchup${games.length===1?'':'s'}</span></div><div class="pairings">${games.map(g=>`<div class="pairing"><span class="player">${esc(g.p1)}</span><span class="vs">VS</span><span class="player">${esc(g.p2)}</span></div>`).join('')}</div></section>`).join('');}
+    sync.textContent='Synced '+new Date().toLocaleTimeString()+' · auto-refreshes every 30s';
+  }catch(e){
+    el.innerHTML='<p class="empty">Could not load the Rotation sheet. Make sure the spreadsheet is shared for viewing and the tab is named “Rotation”.</p>';
+    sync.textContent='Sync failed';
+  }
+}
+document.getElementById('refresh').addEventListener('click',load);
+load();setInterval(load,30000);
+</script>
+<footer><div class="wrap"><p class="mono">PROGRESSION LEAGUE · a homebrew Pokémon TCG format · v2.0</p><p>Simulator: <a href="https://pokemoncard.io/pack-sim">pokemoncard.io/pack-sim</a> · Arena: Tabletop Simulator</p><p class="disc">Fan-made house-rules document for private play. Not produced by, endorsed by, or affiliated with Nintendo, The Pokémon Company International, or GAME FREAK.</p></div></footer>
+</body>
+</html>
