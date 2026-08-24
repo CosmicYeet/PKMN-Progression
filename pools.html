@@ -203,6 +203,10 @@ footer p{margin:6px 0}
 
 @media(prefers-reduced-motion:reduce){h1{animation:none}.chev{transition:none}}
 
+/* live refresh button */
+.refresh{margin-left:12px;font-family:"Space Mono",monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);background:transparent;border:1px solid rgba(231,185,60,.4);border-radius:20px;padding:4px 11px;cursor:pointer;vertical-align:middle}
+.refresh:hover{background:rgba(231,185,60,.12)}
+
 </style>
 </head>
 <body><nav class="topnav"><div class="inner">
@@ -213,58 +217,76 @@ footer p{margin:6px 0}
   <header class="pagehead">
     <p class="eyebrow">The Vault · Anti-cheat</p>
     <h1 class="pagetitle">Card Pools</h1>
-    <p class="thesis">The single source of truth for what everyone owns. After each pack-opening, every player posts their <b>Share</b> link from the sim here. Decks are audited against these pulls &mdash; if a card isn't in your logged pool, it can't be in your deck.</p>
+    <p class="thesis">The single source of truth for what everyone owns. Every share-link is a frozen snapshot of exactly what a player pulled &mdash; decks are audited against these. If a card isn't in your logged pool, it can't be in your deck. Pulled live from the league spreadsheet.</p>
+    <p class="current-set">Current set: <span id="curset">…</span> <button id="refresh" class="refresh">&#8635; Refresh</button></p>
   </header>
 
   <section>
     <div class="card howto">
       <h3>How to log your pulls</h3>
       <ol class="flow">
-        <li>Open your packs in the sim, then click <b>Share your Pulls &rarr; Copy Link</b>.</li>
-        <li>Paste that link into your entry in the data block below (one line per session).</li>
-        <li>Commit. Everyone loads the same page, so the pool is public and verifiable.</li>
+        <li>Right after opening, click <b>Share your Pulls &rarr; Copy Link</b> in the sim. That link is a permanent snapshot of exactly what you pulled that session.</li>
+        <li>Drop the link where your group collects them (a Discord channel works well), tagged with your name and the set.</li>
+        <li>The Commissioner pastes each link into the league <b>Google Sheet</b> &mdash; the player's row, the column for that set. This page reads the sheet live, so it updates on its own.</li>
       </ol>
-      <p class="note">Optional belt-and-suspenders: also keep a logged-in <b>My Collection</b> on the sim so your cumulative pool lives in one permanent place.</p>
+      <p class="note">You don't need GitHub or spreadsheet access to take part &mdash; you just share links, and one person keeps the sheet.</p>
     </div>
   </section>
 
   <section>
-    <div class="sec-head"><span class="sec-no">◆</span><h2>The Trainers</h2></div>
-    <div id="pools" class="poolgrid"></div>
+    <div class="sec-head"><span class="sec-no">&#9670;</span><h2>The Trainers</h2></div>
+    <div id="pools" class="poolgrid"><p class="empty2">Loading…</p></div>
   </section>
 </div>
 
 <script>
-/* ================= EDIT THIS BLOCK EACH SESSION ================= */
-const PLAYERS = [
-  { name: "Player One", pulls: [
-    // { set: "Base Set", url: "https://pokemoncard.io/pack-sim?draft=XXXX" },
-  ]},
-  { name: "Player Two",   pulls: [] },
-  { name: "Player Three", pulls: [] },
-  { name: "Player Four",  pulls: [] },
-  { name: "Player Five",  pulls: [] },
-];
-/* =============================================================== */
+/* ===== Paste your Google Sheet ID between the quotes (see setup notes). ===== */
+const SHEET_ID = "PASTE_YOUR_SHEET_ID_HERE";
 
-const grid = document.getElementById('pools');
-PLAYERS.forEach(p => {
-  const pulls = p.pulls || [];
-  let inner;
-  if (!pulls.length) {
-    inner = '<p class="empty2">No pulls logged yet.</p>';
-  } else {
-    inner = pulls.map(x =>
-      `<div class="pull"><span class="pset">${x.set}</span><a href="${x.url}" target="_blank" rel="noopener">${x.url}</a></div>`
-    ).join('');
+function parseCSV(t){
+  const rows=[]; let row=[], cur='', q=false;
+  for(let i=0;i<t.length;i++){ const c=t[i];
+    if(q){ if(c==='"'){ if(t[i+1]==='"'){cur+='"';i++;} else {q=false;} } else cur+=c; }
+    else if(c==='"'){ q=true; }
+    else if(c===','){ row.push(cur); cur=''; }
+    else if(c==='\n'){ row.push(cur); rows.push(row); row=[]; cur=''; }
+    else if(c==='\r'){}
+    else cur+=c;
   }
-  grid.insertAdjacentHTML('beforeend',
-    `<div class="pool">
-       <h3>${p.name}</h3>
-       <div class="count">${pulls.length} session${pulls.length===1?'':'s'} logged</div>
-       <div class="pulls">${inner}</div>
-     </div>`);
-});
+  if(cur!==''||row.length){ row.push(cur); rows.push(row); }
+  return rows;
+}
+function gviz(tab){
+  const u='https://docs.google.com/spreadsheets/d/'+SHEET_ID+'/gviz/tq?tqx=out:csv&sheet='+encodeURIComponent(tab)+'&_='+Date.now();
+  return fetch(u,{cache:'no-store'}).then(r=>{ if(!r.ok) throw new Error('http '+r.status); return r.text(); }).then(parseCSV);
+}
+function esc(s){ return (s==null?'':(''+s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function num(v){ v=(v==null?'':(''+v)).trim(); return (v===''||isNaN(+v))?0:+v; }
+
+async function load(){
+  const grid=document.getElementById('pools');
+  const csEl=document.getElementById('curset');
+  if(SHEET_ID==="PASTE_YOUR_SHEET_ID_HERE"){ grid.innerHTML=`<p class="empty2">Paste your Google Sheet ID at the top of this file to go live.</p>`; return; }
+  grid.innerHTML=`<p class="empty2">Loading…</p>`;
+  try{
+    const [rows,srows]=await Promise.all([gviz('Standings'),gviz('Settings')]);
+    let curset='—'; srows.slice(1).forEach(r=>{ if((r[0]||'').trim().toLowerCase()==='current set'&&(r[1]||'').trim()) curset=(r[1]).trim(); });
+    csEl.textContent=curset;
+    const hd=(rows[0]||[]).map(h=>(h||'').trim());
+    const pIdx=hd.findIndex(h=>h.toLowerCase()==='player');
+    const fixed=new Set(['player','played','won','lost','pts','points']);
+    const setCols=hd.map((h,i)=>({name:h,i})).filter(c=>c.name&&!fixed.has(c.name.toLowerCase()));
+    const players=rows.slice(1).filter(r=> pIdx>-1 && (r[pIdx]||'').trim());
+    grid.innerHTML = players.length ? players.map(r=>{
+      const name=(r[pIdx]||'').trim();
+      const pulls=setCols.map(c=>({set:c.name,url:(r[c.i]||'').trim()})).filter(x=>x.url);
+      const inner = pulls.length ? pulls.map(x=>`<div class="pull"><span class="pset">${esc(x.set)}</span><a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.url)}</a></div>`).join('') : `<p class="empty2">No pulls logged yet.</p>`;
+      return `<div class="pool"><h3>${esc(name)}</h3><div class="count">${pulls.length} set${pulls.length===1?'':'s'} logged</div><div class="pulls">${inner}</div></div>`;
+    }).join('') : `<p class="empty2">No trainers in the sheet yet.</p>`;
+  }catch(e){ grid.innerHTML=`<p class="empty2">Couldn't reach the sheet. Make sure it's shared &ldquo;Anyone with the link &middot; Viewer&rdquo; and has a tab named <b>Standings</b>.</p>`; }
+}
+document.getElementById('refresh').addEventListener('click',load);
+load();
 </script>
 <footer><div class="wrap">
   <p class="mono">PROGRESSION LEAGUE · a homebrew Pok&eacute;mon TCG format · v2.0</p>
