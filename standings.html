@@ -203,6 +203,10 @@ footer p{margin:6px 0}
 
 @media(prefers-reduced-motion:reduce){h1{animation:none}.chev{transition:none}}
 
+/* live refresh button */
+.refresh{margin-left:12px;font-family:"Space Mono",monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);background:transparent;border:1px solid rgba(231,185,60,.4);border-radius:20px;padding:4px 11px;cursor:pointer;vertical-align:middle}
+.refresh:hover{background:rgba(231,185,60,.12)}
+
 </style>
 </head>
 <body><nav class="topnav"><div class="inner">
@@ -211,76 +215,83 @@ footer p{margin:6px 0}
 </div></nav>
 <div class="wrap page">
   <header class="pagehead">
-    <p class="eyebrow">Season · Live</p>
+    <p class="eyebrow">Season · Live from Sheets</p>
     <h1 class="pagetitle">Standings</h1>
-    <p class="thesis">Cumulative match points across the whole progression. Win = <b>3</b>, loss = <b>0</b>. Updated after every session.</p>
-    <p class="current-set">Current set: <span id="curset">—</span></p>
+    <p class="thesis">Cumulative match points across the whole progression. Win = <b>3</b>, loss = <b>0</b>. Pulled live from the league spreadsheet.</p>
+    <p class="current-set">Current set: <span id="curset">…</span> <button id="refresh" class="refresh">&#8635; Refresh</button></p>
   </header>
 
   <section>
     <table class="board">
       <thead><tr><th>#</th><th>Trainer</th><th class="num">Played</th><th class="num">Won</th><th class="num">Lost</th><th class="num">Pts</th></tr></thead>
-      <tbody id="board"></tbody>
+      <tbody id="board"><tr><td colspan="6" class="empty">Loading…</td></tr></tbody>
     </table>
-    <p class="note tie-note">Tiebreak on equal points: more wins, then fewer losses. Era titles are tracked below as they're won.</p>
+    <p class="note tie-note">Tiebreak on equal points: more wins, then fewer losses. Played and Pts fill in automatically from Won/Lost if you leave those columns blank.</p>
   </section>
 
   <section>
-    <div class="sec-head"><span class="sec-no">◆</span><h2>Era Titles</h2></div>
+    <div class="sec-head"><span class="sec-no">&#9670;</span><h2>Era Titles</h2></div>
     <div id="titles" class="titlegrid"></div>
   </section>
 </div>
 
 <script>
-/* ================= EDIT THIS BLOCK EACH SESSION ================= */
-const CURRENT_SET = "Base Set";
+/* ===== Paste your Google Sheet ID between the quotes (see setup notes). ===== */
+const SHEET_ID = "PASTE_YOUR_SHEET_ID_HERE";
 
-const STANDINGS = [
-  { name: "Player One",   won: 0, lost: 0 },
-  { name: "Player Two",   won: 0, lost: 0 },
-  { name: "Player Three", won: 0, lost: 0 },
-  { name: "Player Four",  won: 0, lost: 0 },
-  { name: "Player Five",  won: 0, lost: 0 },
-];
-
-const ERA_TITLES = [
-  // { era: "Wizards Era", champion: "Player One" },
-];
-/* =============================================================== */
-
-document.getElementById('curset').textContent = CURRENT_SET;
-
-const rows = STANDINGS
-  .map(p => ({...p, played: p.won + p.lost, pts: p.won * 3}))
-  .sort((a,b) => b.pts - a.pts || b.won - a.won || a.lost - b.lost || a.name.localeCompare(b.name));
-
-const tb = document.getElementById('board');
-if (!rows.length) {
-  tb.innerHTML = '<tr><td colspan="6" class="empty">No trainers yet — add players in the data block.</td></tr>';
-} else {
-  rows.forEach((p, i) => {
-    const leader = i === 0 && p.pts > 0;
-    tb.insertAdjacentHTML('beforeend',
-      `<tr class="${leader ? 'leader' : ''}">
-        <td class="rank">${i + 1}</td>
-        <td class="name">${p.name}</td>
-        <td class="num">${p.played}</td>
-        <td class="num">${p.won}</td>
-        <td class="num">${p.lost}</td>
-        <td class="pts">${p.pts}</td>
-      </tr>`);
-  });
+function parseCSV(t){
+  const rows=[]; let row=[], cur='', q=false;
+  for(let i=0;i<t.length;i++){ const c=t[i];
+    if(q){ if(c==='"'){ if(t[i+1]==='"'){cur+='"';i++;} else {q=false;} } else cur+=c; }
+    else if(c==='"'){ q=true; }
+    else if(c===','){ row.push(cur); cur=''; }
+    else if(c==='\n'){ row.push(cur); rows.push(row); row=[]; cur=''; }
+    else if(c==='\r'){}
+    else cur+=c;
+  }
+  if(cur!==''||row.length){ row.push(cur); rows.push(row); }
+  return rows;
 }
-
-const tg = document.getElementById('titles');
-if (!ERA_TITLES.length) {
-  tg.innerHTML = '<p class="empty2">No era titles claimed yet. The first is decided at the close of the Wizards Era.</p>';
-} else {
-  ERA_TITLES.forEach(t => {
-    tg.insertAdjacentHTML('beforeend',
-      `<div class="titlecard"><div class="tera">${t.era}</div><div class="tchamp">♛ ${t.champion}</div></div>`);
-  });
+function gviz(tab){
+  const u='https://docs.google.com/spreadsheets/d/'+SHEET_ID+'/gviz/tq?tqx=out:csv&sheet='+encodeURIComponent(tab)+'&_='+Date.now();
+  return fetch(u,{cache:'no-store'}).then(r=>{ if(!r.ok) throw new Error('http '+r.status); return r.text(); }).then(parseCSV);
 }
+function esc(s){ return (s==null?'':(''+s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function num(v){ v=(v==null?'':(''+v)).trim(); return (v===''||isNaN(+v))?0:+v; }
+
+async function load(){
+  const board=document.getElementById('board');
+  const titlesEl=document.getElementById('titles');
+  const csEl=document.getElementById('curset');
+  if(SHEET_ID==="PASTE_YOUR_SHEET_ID_HERE"){
+    board.innerHTML=`<tr><td colspan="6" class="empty">Paste your Google Sheet ID at the top of this file to go live.</td></tr>`;
+    titlesEl.innerHTML=`<p class="empty2">&mdash;</p>`; return;
+  }
+  board.innerHTML=`<tr><td colspan="6" class="empty">Loading…</td></tr>`;
+  try{
+    const [rows,srows]=await Promise.all([gviz('Standings'),gviz('Settings')]);
+    let curset='—', ttl=[];
+    srows.slice(1).forEach(r=>{ const k=(r[0]||'').trim().toLowerCase(), v=(r[1]||'').trim();
+      if(k==='current set'&&v){curset=v;}
+      else if(k==='era title'&&v){ const p=v.split('='); const era=(p.shift()||'').trim(); const champ=(p.join('=')).trim()||'TBD'; ttl.push({era,champ}); } });
+    csEl.textContent=curset;
+    const hd=(rows[0]||[]).map(h=>(h||'').trim()); const ix={}; hd.forEach((h,i)=>ix[h.toLowerCase()]=i);
+    const data=rows.slice(1).filter(r=> ix.player!=null && (r[ix.player]||'').trim());
+    const list=data.map(r=>{
+      const won=num(r[ix.won]), lost=num(r[ix.lost]);
+      const played=(ix.played!=null&&(''+(r[ix.played]||'')).trim()!==''&&!isNaN(+r[ix.played]))?+r[ix.played]:won+lost;
+      const pts=(ix.pts!=null&&(''+(r[ix.pts]||'')).trim()!==''&&!isNaN(+r[ix.pts]))?+r[ix.pts]:won*3;
+      return {name:(r[ix.player]||'').trim(),won,lost,played,pts};
+    }).sort((a,b)=>b.pts-a.pts||b.won-a.won||a.lost-b.lost||a.name.localeCompare(b.name));
+    board.innerHTML = list.length ? list.map((p,i)=>`<tr class="${i===0&&p.pts>0?'leader':''}"><td class="rank">${i+1}</td><td class="name">${esc(p.name)}</td><td class="num">${p.played}</td><td class="num">${p.won}</td><td class="num">${p.lost}</td><td class="pts">${p.pts}</td></tr>`).join('') : `<tr><td colspan="6" class="empty">No trainers in the sheet yet.</td></tr>`;
+    titlesEl.innerHTML = ttl.length ? ttl.map(t=>`<div class="titlecard"><div class="tera">${esc(t.era)}</div><div class="tchamp">♛ ${esc(t.champ)}</div></div>`).join('') : `<p class="empty2">No era titles claimed yet. The first is decided at the close of the Wizards Era.</p>`;
+  }catch(e){
+    board.innerHTML=`<tr><td colspan="6" class="empty">Couldn't reach the sheet. Make sure it's shared &ldquo;Anyone with the link &middot; Viewer&rdquo; and has a tab named <b>Standings</b>.</td></tr>`;
+    titlesEl.innerHTML='';
+  }
+}
+document.getElementById('refresh').addEventListener('click',load);
+load();
 </script>
 <footer><div class="wrap">
   <p class="mono">PROGRESSION LEAGUE · a homebrew Pok&eacute;mon TCG format · v2.0</p>
