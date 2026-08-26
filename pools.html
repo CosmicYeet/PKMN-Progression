@@ -300,11 +300,12 @@ async function load(){
     if(!players.length){ grid.innerHTML=`<p class="empty2">No trainers yet.</p>`; return; }
     grid.innerHTML=players.map((t,index)=>{
       const has=t.cards&&t.cards.length;
+      const exportReady=has&&t.cards.every(c=>c.name&&c.name!==c.id);
       const cardsHtml=has?t.cards.map(c=>`<a class="carditem" href="${imgFor(c.id)}" target="_blank" rel="noopener" title="${esc(c.id)} ×${c.count}"><img loading="lazy" src="${imgFor(c.id)}" alt="${esc(c.id)}"><span class="qty">×${c.count}</span></a>`).join(''):'';
       const meta=has?`<div class="collmeta"><b>${t.unique}</b> unique &middot; <b>${t.total}</b> total copies &middot; ${t.sessionsOk}/${t.sessions} sessions loaded</div>`:'<p class="empty2">No pulls logged yet.</p>';
       return `<details class="pool-details">
         <summary><span class="pchev"></span><span class="pname">${esc(t.name)}</span><span class="pmeta">${t.sessions} session${t.sessions===1?'':'s'}</span></summary>
-        <div class="pool-body">${meta}${has?`<button class="export-pool" type="button" onclick="exportPool(${index})">Export Draft List</button><div class="cardgrid">${cardsHtml}</div>`:''}</div>
+        <div class="pool-body">${meta}${has?`<button class="export-pool" type="button" onclick="exportPool(${index})" ${exportReady?'':'disabled'}>${exportReady?'Export Draft List':'Preparing Export…'}</button><div class="cardgrid">${cardsHtml}</div>`:''}</div>
       </details>`;
     }).join('');
   }catch(e){
