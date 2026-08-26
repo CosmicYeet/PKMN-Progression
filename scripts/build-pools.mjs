@@ -42,9 +42,11 @@ function parseSharePage(html){
     const m = src.match(/\/images\/[^/]+\/([^/?#]+)\.png/i); if(!m) continue;
     const cm = (a.text || '').match(/\d+/);
     const id = m[1], count = cm ? parseInt(cm[0], 10) : 1;
-    agg.set(id, (agg.get(id) || 0) + count);
+    const name = (img.getAttribute('alt') || img.getAttribute('title') || a.getAttribute('title') || '').trim();
+    const prior = agg.get(id);
+    agg.set(id, { id, name:name || (prior && prior.name) || id, count:(prior ? prior.count : 0) + count });
   }
-  return [...agg.entries()].map(([id,c]) => `${id}:${c}`).join(',');
+  return [...agg.values()];
 }
 const codeOf = (id) => { const x = id.indexOf('-'); return x>0 ? id.slice(0,x) : id; };
 const numOf  = (id) => { const m = id.match(/(\d+)\D*$/); return m ? parseInt(m[1],10) : 0; };
@@ -68,7 +70,8 @@ async function main(){
   try { cache = JSON.parse(readFileSync('data/link-cache.json','utf8')); } catch (e) {}
 
   const allUrls = [...new Set(players.flatMap(p => p.pulls.map(x => x.url)))];
-  const missing = allUrls.filter(u => !(u in cache));
+  // Legacy cache entries stored only IDs/counts. Refresh them once so exports also have card names.
+  const missing = allUrls.filter(u => !Array.isArray(cache[u]));
   console.log(`links: ${allUrls.length} total, ${missing.length} new`);
 
   for(const url of missing){
@@ -78,7 +81,7 @@ async function main(){
       const html = await r.text();
       if(html.indexOf('images.pokemoncard.io') < 0){ console.log('  no cards', url); continue; }
       cache[url] = parseSharePage(html);
-      console.log('  cached', url, `(${cache[url].split(',').filter(Boolean).length} unique)`);
+      console.log('  cached', url, `(${cache[url].length} unique)`);
     }catch(e){ console.log('  error', url, e.message); }
     await new Promise(res => setTimeout(res, 250)); // be polite
   }
@@ -87,15 +90,25 @@ async function main(){
   const outPlayers = players.map(p => {
     const agg = new Map(); let sessionsOk = 0;
     for(const pull of p.pulls){
-      const compact = cache[pull.url];
-      if(compact == null) continue;
+      const cached = cache[pull.url];
+      if(cached == null) continue;
       sessionsOk++;
-      for(const tok of compact.split(',').filter(Boolean)){
-        const ci = tok.lastIndexOf(':'); const id = tok.slice(0,ci); const cnt = parseInt(tok.slice(ci+1),10)||1;
-        agg.set(id, (agg.get(id)||0) + cnt);
+      const entries = Array.isArray(cached)
+        ? cached
+        : cached.split(',').filter(Boolean).map(tok => {
+            const ci=tok.lastIndexOf(':');
+            return { id:tok.slice(0,ci), count:parseInt(tok.slice(ci+1),10)||1, name:'' };
+          });
+      for(const card of entries){
+        const prior=agg.get(card.id);
+        agg.set(card.id, {
+          id:card.id,
+          name:card.name || (prior && prior.name) || card.id,
+          count:(prior ? prior.count : 0) + (parseInt(card.count,10)||1)
+        });
       }
     }
-    const cards = [...agg.entries()].map(([id,count]) => ({id,count}))
+    const cards = [...agg.values()]
       .sort((a,b)=>{ const ca=codeOf(a.id), cb=codeOf(b.id); if(ca!==cb) return ca<cb?-1:1; return (numOf(a.id)-numOf(b.id))||(a.id<b.id?-1:1); });
     const total = cards.reduce((s,c)=>s+c.count,0);
     return { name:p.name, sessions:p.pulls.length, sessionsOk, unique:cards.length, total, cards };
