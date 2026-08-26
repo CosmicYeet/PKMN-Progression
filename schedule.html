@@ -27,7 +27,7 @@ h1{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:clamp(
 .pairings{padding:6px 20px 12px}.pairing{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid var(--paper-line)}.pairing:last-child{border-bottom:0}.side{display:flex;align-items:center;gap:8px;min-width:0}.side.right{justify-content:flex-end;text-align:right}.player{font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:17px;min-width:0}.result{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;font-family:"Space Mono",monospace;font-size:10px;font-weight:700;flex:none}.result.win{background:#dff2dc;color:#267326}.result.loss{background:#f5dddd;color:#a52d2d}.score{font-family:"Space Mono",monospace;font-size:12px;color:var(--red);font-weight:700;white-space:nowrap}.score.done{color:var(--ink-2);font-size:14px}
 .empty{grid-column:1/-1;background:var(--paper);color:var(--soft);border-radius:12px;padding:26px;font-family:"Space Mono",monospace;font-size:13px}
 .tournament{padding:18px 0 54px}.tour-head{border-top:1px solid rgba(244,236,216,.14);padding-top:42px;margin-bottom:24px}.tour-kicker{font-family:"Space Mono",monospace;font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);margin:0 0 8px}.tour-head h2{font-family:"Bricolage Grotesque",sans-serif;font-size:clamp(32px,6vw,52px);line-height:1;margin:0}.tour-head p{color:#D9D2BE;max-width:680px;margin:14px 0 0}
-.bracket{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;align-items:start}.round{display:grid;gap:14px}.round-title{font-family:"Space Mono",monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin:0 0 2px}.match{background:var(--paper);color:var(--ink);border-radius:11px;overflow:hidden;box-shadow:var(--shadow)}.match-label{display:flex;justify-content:space-between;gap:10px;background:var(--ink-2);color:var(--soft-2);padding:7px 12px;font-family:"Space Mono",monospace;font-size:9px;letter-spacing:.08em;text-transform:uppercase}.match-label b{color:var(--gold)}.slot{display:flex;align-items:center;gap:9px;padding:11px 12px;border-bottom:1px solid var(--paper-line)}.slot:last-child{border-bottom:0}.seed{display:grid;place-items:center;width:23px;height:23px;border-radius:50%;background:var(--ink-2);color:var(--gold);font-family:"Space Mono",monospace;font-size:10px;font-weight:700;flex:none}.slot-name{font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:15px}.placeholder{color:var(--soft);font-weight:600}.bye{font-family:"Space Mono",monospace;font-size:9px;color:var(--red);margin-left:auto;text-transform:uppercase;letter-spacing:.08em}
+.bracket{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;align-items:start}.round{display:grid;gap:14px}.round-title{font-family:"Space Mono",monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin:0 0 2px}.match{background:var(--paper);color:var(--ink);border-radius:11px;overflow:hidden;box-shadow:var(--shadow)}.match-label{display:flex;justify-content:space-between;gap:10px;background:var(--ink-2);color:var(--soft-2);padding:7px 12px;font-family:"Space Mono",monospace;font-size:9px;letter-spacing:.08em;text-transform:uppercase}.match-label b{color:var(--gold)}.slot{display:flex;align-items:center;gap:9px;padding:11px 12px;border-bottom:1px solid var(--paper-line)}.slot:last-child{border-bottom:0}.seed{display:grid;place-items:center;width:23px;height:23px;border-radius:50%;background:var(--ink-2);color:var(--gold);font-family:"Space Mono",monospace;font-size:10px;font-weight:700;flex:none}.slot-name{font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:15px}.placeholder{color:var(--soft);font-weight:600}.bye{font-family:"Space Mono",monospace;font-size:9px;color:var(--red);margin-left:auto;text-transform:uppercase;letter-spacing:.08em}
 @media(max-width:760px){.bracket{grid-template-columns:1fr}.round{margin-bottom:8px}}
 footer{padding:44px 0;border-top:1px solid rgba(244,236,216,.14);color:var(--soft-2);font-size:14px}footer a{color:var(--gold);text-decoration:none}.mono{font-family:"Space Mono",monospace}.disc{font-size:12px;color:var(--soft);max-width:660px}
 @media(max-width:680px){.schedule{grid-template-columns:1fr}.topnav .inner{align-items:flex-start}.navlinks{width:100%}.navlinks a{padding-left:7px;padding-right:7px}}
@@ -50,7 +50,7 @@ footer{padding:44px 0;border-top:1px solid rgba(244,236,216,.14);color:var(--sof
   <div class="tour-head">
     <p class="tour-kicker">End of the Wizards Era</p>
     <h2>Era Tournament</h2>
-    <p>Eight-player, single-elimination bracket seeded from the current standings. Every matchup is best of three, beginning with four quarterfinals.</p>
+    <p>Nine-player, single-elimination bracket seeded from the current standings. Seeds 8 and 9 play an opening match for the final quarterfinal spot. Every matchup is best of three.</p>
   </div>
   <div id="bracket" class="bracket"><p class="empty">Loading current seeds…</p></div>
 </section>
@@ -107,12 +107,16 @@ function waitingSlot(text){
 }
 function renderBracket(players){
   const el=document.getElementById('bracket');
-  if(players.length<8){el.innerHTML='<p class="empty">The bracket will appear once eight trainers are listed in Standings.</p>';return;}
-  const p=players.slice(0,8);
+  if(players.length<9){el.innerHTML='<p class="empty">The bracket will appear once nine trainers are listed in Standings.</p>';return;}
+  const p=players.slice(0,9);
   el.innerHTML=`
     <div class="round">
+      <p class="round-title">Opening Round</p>
+      <div class="match"><div class="match-label"><span>Play-in</span><b>Best of 3</b></div>${playerSlot(p[7],8)}${playerSlot(p[8],9)}</div>
+    </div>
+    <div class="round">
       <p class="round-title">Quarterfinals</p>
-      <div class="match"><div class="match-label"><span>Match A</span><b>Best of 3</b></div>${playerSlot(p[0],1)}${playerSlot(p[7],8)}</div>
+      <div class="match"><div class="match-label"><span>Match A</span><b>Best of 3</b></div>${playerSlot(p[0],1)}${waitingSlot('Winner of 8 vs 9')}</div>
       <div class="match"><div class="match-label"><span>Match B</span><b>Best of 3</b></div>${playerSlot(p[3],4)}${playerSlot(p[4],5)}</div>
       <div class="match"><div class="match-label"><span>Match C</span><b>Best of 3</b></div>${playerSlot(p[1],2)}${playerSlot(p[6],7)}</div>
       <div class="match"><div class="match-label"><span>Match D</span><b>Best of 3</b></div>${playerSlot(p[2],3)}${playerSlot(p[5],6)}</div>
