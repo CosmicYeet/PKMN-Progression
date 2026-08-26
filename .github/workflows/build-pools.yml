@@ -4,6 +4,10 @@ name: Build card pools
 
 on:
   workflow_dispatch: {}                 # lets you run it manually from the Actions tab
+  push:
+    paths:
+      - '.github/workflows/build-pools.yml'
+      - 'scripts/build-pools.mjs'
   schedule:
     - cron: '*/15 * * * *'              # and automatically every 15 minutes
 
