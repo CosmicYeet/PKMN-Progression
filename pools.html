@@ -207,6 +207,9 @@ footer p{margin:6px 0}
 /* live refresh button */
 .refresh{margin-left:12px;font-family:"Space Mono",monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);background:transparent;border:1px solid rgba(231,185,60,.4);border-radius:20px;padding:4px 11px;cursor:pointer;vertical-align:middle}
 .refresh:hover{background:rgba(231,185,60,.12)}
+.export-pool{font-family:"Space Mono",monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#fff;background:var(--red);border:0;border-radius:7px;padding:9px 13px;cursor:pointer;margin:0 0 14px}
+.export-pool:hover{filter:brightness(.92)}
+.export-pool:disabled{cursor:not-allowed;opacity:.45}
 
 /* live sync + collapsible trainer pools + card grids */
 .synced{font-family:"Space Mono",monospace;font-size:11px;color:var(--soft-2);margin-top:10px}
@@ -268,6 +271,22 @@ footer p{margin:6px 0}
 function imgFor(id){ const d=id.indexOf('-'); const code=d>0?id.slice(0,d):id; return 'https://images.pokemoncard.io/images/'+code+'/'+id+'.png'; }
 function esc(s){ return (s==null?'':(''+s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function ago(iso){ try{ const s=Math.floor((Date.now()-new Date(iso))/1000); if(s<60)return 'just now'; if(s<3600)return Math.floor(s/60)+'m ago'; if(s<86400)return Math.floor(s/3600)+'h ago'; return Math.floor(s/86400)+'d ago'; }catch(e){ return ''; } }
+let loadedPlayers=[];
+function exportPool(index){
+  const trainer=loadedPlayers[index];
+  if(!trainer || !trainer.cards || !trainer.cards.length) return;
+  const lines=['/ PokemonCard.io Draft List'];
+  trainer.cards.forEach(c=>lines.push(`${c.count} ${c.name || c.id} ${c.id}`));
+  const blob=new Blob([lines.join('\n')+'\n'],{type:'text/plain;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;
+  a.download=(trainer.name || 'trainer').replace(/[^a-z0-9_-]+/gi,'-').replace(/^-|-$/g,'')+'-draft-list.txt';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
 async function load(){
   const grid=document.getElementById('pools'), csEl=document.getElementById('curset'), upEl=document.getElementById('updated');
   try{
@@ -277,14 +296,15 @@ async function load(){
     csEl.textContent=data.currentSet||'—';
     upEl.textContent=data.updated?('· updated '+ago(data.updated)):'';
     const players=data.players||[];
+    loadedPlayers=players;
     if(!players.length){ grid.innerHTML=`<p class="empty2">No trainers yet.</p>`; return; }
-    grid.innerHTML=players.map(t=>{
+    grid.innerHTML=players.map((t,index)=>{
       const has=t.cards&&t.cards.length;
       const cardsHtml=has?t.cards.map(c=>`<a class="carditem" href="${imgFor(c.id)}" target="_blank" rel="noopener" title="${esc(c.id)} ×${c.count}"><img loading="lazy" src="${imgFor(c.id)}" alt="${esc(c.id)}"><span class="qty">×${c.count}</span></a>`).join(''):'';
       const meta=has?`<div class="collmeta"><b>${t.unique}</b> unique &middot; <b>${t.total}</b> total copies &middot; ${t.sessionsOk}/${t.sessions} sessions loaded</div>`:'<p class="empty2">No pulls logged yet.</p>';
       return `<details class="pool-details">
         <summary><span class="pchev"></span><span class="pname">${esc(t.name)}</span><span class="pmeta">${t.sessions} session${t.sessions===1?'':'s'}</span></summary>
-        <div class="pool-body">${meta}${has?`<div class="cardgrid">${cardsHtml}</div>`:''}</div>
+        <div class="pool-body">${meta}${has?`<button class="export-pool" type="button" onclick="exportPool(${index})">Export Draft List</button><div class="cardgrid">${cardsHtml}</div>`:''}</div>
       </details>`;
     }).join('');
   }catch(e){
