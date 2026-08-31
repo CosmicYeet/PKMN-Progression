@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Standings — Progression League</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Familjen+Grotesk:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -231,105 +232,148 @@ footer p{margin:6px 0}
 .loadingcards{font-family:"Space Mono",monospace;font-size:12px;color:var(--soft);padding:6px 0}
 .fallback{font-family:"Space Mono",monospace;font-size:12px}
 .fallback a{color:#2b5fb0;word-break:break-all}
-.collmeta{font-family:"Space Mono",monospace;font-size:12px;color:var(--soft);margin:4px 0 12px;letter-spacing:.03em}
-.collmeta b{color:var(--ink)}
-
-/* card-pool export buttons */
-.poolbtns{display:flex;gap:8px;margin:2px 0 14px;flex-wrap:wrap}
-.poolbtn{font-family:"Space Mono",monospace;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#2b3a66;background:#fff;border:1px solid var(--paper-line);border-radius:7px;padding:6px 12px;cursor:pointer}
-.poolbtn:hover{background:#f3ecd8;border-color:#c9b784}
-.poolbtn:active{transform:translateY(1px)}
-
-/* secret / wheel of fate */
-.wip{display:inline-block;font-family:"Space Mono",monospace;background:var(--red);color:#fff;padding:3px 11px;border-radius:20px;font-size:12px;letter-spacing:.14em;margin-left:12px;vertical-align:middle}
-.gate{max-width:420px;margin:20px auto;background:var(--paper);color:var(--ink);border-radius:12px;padding:28px;box-shadow:var(--shadow);text-align:center}
-.gate h3{font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:20px;margin:0 0 6px;color:var(--ink)}
-.gate input{width:100%;padding:11px 14px;border:1px solid var(--paper-line);border-radius:8px;font-family:"Space Mono",monospace;font-size:15px;background:#fff;color:var(--ink);margin-top:6px}
-.wheelwrap{position:relative;width:min(92vw,460px);margin:8px auto 0}
-#wheel{width:100%;height:auto;display:block;transition:transform 4.6s cubic-bezier(.15,.62,.12,1);transform-origin:50% 50%}
-.pointer{position:absolute;top:-4px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:15px solid transparent;border-right:15px solid transparent;border-top:26px solid var(--gold);filter:drop-shadow(0 2px 3px rgba(0,0,0,.55));z-index:2}
-.spinbtn{display:block;margin:24px auto 0;font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:19px;letter-spacing:.04em;color:#14172B;background:var(--gold);border:none;border-radius:12px;padding:13px 40px;cursor:pointer;box-shadow:var(--shadow)}
-.spinbtn:disabled{opacity:.5;cursor:default}
-.result{max-width:560px;margin:22px auto 0;background:var(--paper);color:var(--ink);border-radius:12px;padding:20px 24px;box-shadow:var(--shadow);text-align:center}
-.result .rlabel{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:22px;color:var(--red)}
-.wlegend{max-width:640px;margin:26px auto 0}
-.wlegend .wrow{display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid rgba(244,236,216,.1);color:#D9D2BE}
-.wlegend .sw{width:15px;height:15px;border-radius:4px;flex:none}
-.wlegend .wpct{margin-left:auto;font-family:"Space Mono",monospace;color:var(--soft-2)}
 
 </style>
 </head>
 <body><nav class="topnav"><div class="inner">
   <a class="brand" href="index.html">Progression League</a>
-  <div class="navlinks"><a href="index.html">Rulebook</a><a href="standings.html" class="active">Standings</a><a href="pools.html">Card Pools</a><a href="secret.html">Secret</a></div>
+  <div class="navlinks"><a href="index.html">Rulebook</a><a href="standings.html" class="active">Standings</a><a href="schedule.html">Schedule</a><a href="pools.html">Card Pools</a><a href="deckbuilder.html">Deck Builder</a></div>
 </div></nav>
 <div class="wrap page">
   <header class="pagehead">
     <p class="eyebrow">Season · Live from Sheets</p>
     <h1 class="pagetitle">Standings</h1>
-    <p class="thesis">Cumulative match points across the whole progression. Win = <b>3</b>, loss = <b>0</b>. Pulled live from the league spreadsheet.</p>
+    <p class="thesis">Cumulative match points across the whole progression. <b>2&ndash;0 = 3 pts</b>, <b>2&ndash;1 = 2 pts</b>, <b>1&ndash;2 = 1 pt</b>, and <b>0&ndash;2 = 0 pts</b>. Pulled live from the league spreadsheet.</p>
     <p class="current-set">Current set: <span id="curset">…</span> <button id="refresh" class="refresh">&#8635; Refresh</button></p>
   </header>
+
   <section>
     <table class="board">
       <thead><tr><th>#</th><th>Trainer</th><th class="num">Played</th><th class="num">Won</th><th class="num">Lost</th><th class="num">Pts</th></tr></thead>
       <tbody id="board"><tr><td colspan="6" class="empty">Loading…</td></tr></tbody>
     </table>
-    <p class="note tie-note">Tiebreak on equal points: more wins, then fewer losses. Played and Pts fill in automatically from Won/Lost if you leave those columns blank.</p>
+    <p class="note tie-note">Calculated automatically from completed scores in Rotation Columns H and I. Tiebreak on equal points: more match wins, then fewer match losses. Identical records share a rank; the next rank skips accordingly.</p>
     <p class="synced" id="synced"></p>
   </section>
+
   <section>
     <div class="sec-head"><span class="sec-no">&#9670;</span><h2>Era Titles</h2></div>
     <div id="titles" class="titlegrid"></div>
   </section>
 </div>
+
 <script>
-const SHEET_ID = "PASTE_YOUR_SHEET_ID_HERE";
+/* ===== Paste your Google Sheet ID between the quotes (see setup notes). ===== */
+const SHEET_ID = "1EfbocEaH9PvIiHBsTHhLjDv0tE6GWs_dkBI17VkGmIs";
 
 function parseCSV(t){
   const rows=[]; let row=[], cur='', q=false;
   for(let i=0;i<t.length;i++){ const c=t[i];
     if(q){ if(c==='"'){ if(t[i+1]==='"'){cur+='"';i++;} else {q=false;} } else cur+=c; }
-    else if(c==='"'){ q=true; } else if(c===','){ row.push(cur); cur=''; }
+    else if(c==='"'){ q=true; }
+    else if(c===','){ row.push(cur); cur=''; }
     else if(c==='\n'){ row.push(cur); rows.push(row); row=[]; cur=''; }
-    else if(c==='\r'){} else cur+=c;
+    else if(c==='\r'){}
+    else cur+=c;
   }
   if(cur!==''||row.length){ row.push(cur); rows.push(row); }
   return rows;
 }
-function gviz(tab){
-  const u='https://docs.google.com/spreadsheets/d/'+SHEET_ID+'/gviz/tq?tqx=out:csv&headers=1&sheet='+encodeURIComponent(tab)+'&_='+Date.now()+Math.random();
+function gviz(tab,range){
+  const u='https://docs.google.com/spreadsheets/d/'+SHEET_ID+'/gviz/tq?tqx=out:csv&headers=1&sheet='+encodeURIComponent(tab)+(range?'&range='+encodeURIComponent(range):'')+'&_='+Date.now()+Math.random();
   return fetch(u,{cache:'no-store'}).then(r=>{ if(!r.ok) throw new Error('http '+r.status); return r.text(); }).then(parseCSV);
 }
 function esc(s){ return (s==null?'':(''+s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function num(v){ v=(v==null?'':(''+v)).trim(); return (v===''||isNaN(+v))?0:+v; }
+function matchResult(a,b){
+  const av=(a==null?'':String(a)).trim(), bv=(b==null?'':String(b)).trim();
+  if(av===''||bv==='') return null;
+  const s1=Number(av),s2=Number(bv);
+  if(!((s1===2&&(s2===0||s2===1))||(s2===2&&(s1===0||s1===1)))) return null;
+  return {p1Won:s1>s2,p1Pts:s1>s2?(s2===0?3:2):(s1===1?1:0),p2Pts:s2>s1?(s1===0?3:2):(s2===1?1:0)};
+}
+
+/* fetch a pokemoncard.io share page through a CORS proxy, then parse its cards */
+const PROXIES=[
+  u=>'https://api.allorigins.win/raw?url='+encodeURIComponent(u),
+  u=>'https://corsproxy.io/?url='+encodeURIComponent(u),
+  u=>'https://thingproxy.freeboard.io/fetch/'+u
+];
+async function fetchShare(url){
+  for(const mk of PROXIES){
+    try{
+      const r=await fetch(mk(url),{cache:'no-store'});
+      if(!r.ok) continue;
+      const t=await r.text();
+      if(t && t.indexOf('images.pokemoncard.io')>-1) return t;
+    }catch(e){}
+  }
+  throw new Error('all proxies failed');
+}
+function parseShare(html){
+  const doc=new DOMParser().parseFromString(html,'text/html');
+  const cards=[];
+  doc.querySelectorAll('a[href*="/card/"]').forEach(a=>{
+    const img=a.querySelector('img'); if(!img) return;
+    const src=img.getAttribute('src')||''; if(src.indexOf('images.pokemoncard.io')<0) return;
+    const count=parseInt(((a.textContent||'').match(/\d+/)||['1'])[0])||1;
+    let href=a.getAttribute('href')||'';
+    if(href && !/^https?:/.test(href)) href='https://pokemoncard.io'+href;
+    cards.push({img:src, count, title:a.getAttribute('title')||img.getAttribute('alt')||'', href});
+  });
+  return cards;
+}
 
 async function load(){
-  const board=document.getElementById('board'), titlesEl=document.getElementById('titles'), csEl=document.getElementById('curset'), syncEl=document.getElementById('synced');
-  if(SHEET_ID==="PASTE_YOUR_SHEET_ID_HERE"){ board.innerHTML=`<tr><td colspan="6" class="empty">Paste your Google Sheet ID at the top of this file to go live.</td></tr>`; titlesEl.innerHTML=`<p class="empty2">&mdash;</p>`; return; }
+  const board=document.getElementById('board');
+  const titlesEl=document.getElementById('titles');
+  const csEl=document.getElementById('curset');
+  const syncEl=document.getElementById('synced');
+  if(SHEET_ID==="PASTE_YOUR_SHEET_ID_HERE"){
+    board.innerHTML=`<tr><td colspan="6" class="empty">Paste your Google Sheet ID at the top of this file to go live.</td></tr>`;
+    titlesEl.innerHTML=`<p class="empty2">&mdash;</p>`; return;
+  }
   try{
-    const [rows,srows]=await Promise.all([gviz('Standings'),gviz('Settings')]);
+    const [rows,srows,rrows]=await Promise.all([gviz('Standings'),gviz('Settings'),gviz('Rotation','E:I')]);
     let curset='—', ttl=[];
     srows.slice(1).forEach(r=>{ const k=(r[0]||'').trim().toLowerCase(), v=(r[1]||'').trim();
-      if(k==='current set'&&v){curset=v;} else if(k==='era title'&&v){ const p=v.split('='); ttl.push({era:(p.shift()||'').trim(), champ:(p.join('=')).trim()||'TBD'}); } });
+      if(k==='current set'&&v){curset=v;}
+      else if(k==='era title'&&v){ const p=v.split('='); const era=(p.shift()||'').trim(); const champ=(p.join('=')).trim()||'TBD'; ttl.push({era,champ}); } });
     csEl.textContent=curset;
     const hd=(rows[0]||[]).map(h=>(h||'').trim()); const ix={}; hd.forEach((h,i)=>ix[h.toLowerCase()]=i);
     const data=rows.slice(1).filter(r=> ix.player!=null && (r[ix.player]||'').trim());
-    const list=data.map(r=>{ const won=num(r[ix.won]), lost=num(r[ix.lost]);
-      const played=(ix.played!=null&&(''+(r[ix.played]||'')).trim()!==''&&!isNaN(+r[ix.played]))?+r[ix.played]:won+lost;
-      const pts=(ix.pts!=null&&(''+(r[ix.pts]||'')).trim()!==''&&!isNaN(+r[ix.pts]))?+r[ix.pts]:won*3;
-      return {name:(r[ix.player]||'').trim(),won,lost,played,pts};
-    }).sort((a,b)=>b.pts-a.pts||b.won-a.won||a.lost-b.lost||a.name.localeCompare(b.name));
-    board.innerHTML = list.length ? list.map((p,i)=>`<tr class="${i===0&&p.pts>0?'leader':''}"><td class="rank">${i+1}</td><td class="name">${esc(p.name)}</td><td class="num">${p.played}</td><td class="num">${p.won}</td><td class="num">${p.lost}</td><td class="pts">${p.pts}</td></tr>`).join('') : `<tr><td colspan="6" class="empty">No trainers in the sheet yet.</td></tr>`;
+    const stats=new Map(data.map(r=>{const name=(r[ix.player]||'').trim();return[name.toLowerCase(),{name,played:0,won:0,lost:0,pts:0}];}));
+    function getPlayer(name){const key=name.toLowerCase();if(!stats.has(key))stats.set(key,{name,played:0,won:0,lost:0,pts:0});return stats.get(key);}
+    rrows.slice(1).forEach(r=>{
+      const p1=(r[1]||'').trim(),p2=(r[2]||'').trim(),result=matchResult(r[3],r[4]);
+      if(!p1||!p2||!result)return;
+      const a=getPlayer(p1),b=getPlayer(p2);a.played++;b.played++;
+      if(result.p1Won){a.won++;b.lost++;}else{b.won++;a.lost++;}
+      a.pts+=result.p1Pts;b.pts+=result.p2Pts;
+    });
+    const list=[...stats.values()].sort((a,b)=>b.pts-a.pts||b.won-a.won||a.lost-b.lost||a.name.localeCompare(b.name));
+    let rank=0,previous=null;
+    const ranked=list.map((p,i)=>{
+      const tied=previous&&p.pts===previous.pts&&p.won===previous.won&&p.lost===previous.lost;
+      if(!tied)rank=i+1;
+      previous=p;
+      return{...p,rank};
+    });
+    board.innerHTML = ranked.length ? ranked.map(p=>`<tr class="${p.rank===1&&p.played>0?'leader':''}"><td class="rank">${p.rank}</td><td class="name">${esc(p.name)}</td><td class="num">${p.played}</td><td class="num">${p.won}</td><td class="num">${p.lost}</td><td class="pts">${p.pts}</td></tr>`).join('') : `<tr><td colspan="6" class="empty">No trainers in the sheet yet.</td></tr>`;
     titlesEl.innerHTML = ttl.length ? ttl.map(t=>`<div class="titlecard"><div class="tera">${esc(t.era)}</div><div class="tchamp">&#9819; ${esc(t.champ)}</div></div>`).join('') : `<p class="empty2">No era titles claimed yet. The first is decided at the close of the Wizards Era.</p>`;
     syncEl.textContent='Synced '+new Date().toLocaleTimeString()+' · auto-refreshes every 30s';
-  }catch(e){ board.innerHTML=`<tr><td colspan="6" class="empty">Couldn't reach the sheet. Check sharing and the tab named <b>Standings</b>.</td></tr>`; titlesEl.innerHTML=''; }
+  }catch(e){
+    board.innerHTML=`<tr><td colspan="6" class="empty">Couldn't reach the sheet. Make sure it's shared &ldquo;Anyone with the link &middot; Viewer&rdquo; and has a tab named <b>Standings</b>.</td></tr>`;
+    titlesEl.innerHTML='';
+  }
 }
-document.getElementById('refresh').addEventListener('click',load); load(); setInterval(load,30000);
+document.getElementById('refresh').addEventListener('click',load);
+load();
+setInterval(load, 30000);
 </script>
 <footer><div class="wrap">
   <p class="mono">PROGRESSION LEAGUE · a homebrew Pok&eacute;mon TCG format · v2.0</p>
-  <p>Simulator: <a href="https://pokemoncard.io/pack-sim">pokemoncard.io/pack-sim</a> &nbsp;·&nbsp; Arena: Tabletop Simulator</p>
+  <p>Pack simulator: <a href="https://pokemoncard.io/pack-sim">Pok&eacute;monCard.io</a> &nbsp;·&nbsp; Deck builder &amp; arena: <a href="https://tcg.one/">TCG ONE</a></p>
   <p class="disc">Fan-made house-rules document for private play. Not produced by, endorsed by, or affiliated with Nintendo, The Pok&eacute;mon Company International, or GAME FREAK. All set names and card properties belong to their respective owners.</p>
 </div></footer>
 </body></html>

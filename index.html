@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Progression League — Pokémon TCG Rulebook</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Familjen+Grotesk:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -154,8 +155,9 @@ ol.flow b{color:var(--ink)}
 .howto ol.flow li{color:#33374d}
 
 /* season points */
-.points{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:16px}
-@media(max-width:560px){.points{grid-template-columns:1fr}}
+.points{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:16px}
+@media(max-width:700px){.points{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:440px){.points{grid-template-columns:1fr}}
 .pt{background:var(--paper);color:var(--ink);border-radius:12px;padding:20px;text-align:center;box-shadow:var(--shadow)}
 .pt .big{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:42px;color:var(--red);line-height:1}
 .pt .lbl{font-family:"Space Mono",monospace;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--soft);margin-top:8px}
@@ -203,65 +205,11 @@ footer p{margin:6px 0}
 
 @media(prefers-reduced-motion:reduce){h1{animation:none}.chev{transition:none}}
 
-/* live refresh button */
-.refresh{margin-left:12px;font-family:"Space Mono",monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);background:transparent;border:1px solid rgba(231,185,60,.4);border-radius:20px;padding:4px 11px;cursor:pointer;vertical-align:middle}
-.refresh:hover{background:rgba(231,185,60,.12)}
-
-/* live sync + collapsible trainer pools + card grids */
-.synced{font-family:"Space Mono",monospace;font-size:11px;color:var(--soft-2);margin-top:10px}
-.pool-details{background:var(--paper);color:var(--ink);border-radius:12px;box-shadow:var(--shadow);margin-bottom:14px;overflow:hidden}
-.pool-details>summary{list-style:none;cursor:pointer;padding:18px 22px;display:flex;align-items:center;gap:12px;user-select:none}
-.pool-details>summary::-webkit-details-marker{display:none}
-.pool-details>summary:hover{background:rgba(20,23,43,.04)}
-.pchev{width:9px;height:9px;border-right:2px solid var(--red);border-bottom:2px solid var(--red);transform:rotate(-45deg);transition:transform .2s;flex:none}
-.pool-details[open]>summary .pchev{transform:rotate(45deg)}
-.pname{font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:20px;color:var(--ink)}
-.pmeta{font-family:"Space Mono",monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--soft-2);margin-left:auto;text-align:right}
-.pool-body{padding:2px 22px 20px}
-.setblock{margin-top:16px}
-.setblock:first-child{margin-top:6px}
-.setblock h4{font-family:"Bricolage Grotesque",sans-serif;font-size:15px;margin:0 0 10px;color:var(--ink);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-.setblock h4 .sub{font-family:"Space Mono",monospace;font-size:11px;color:var(--soft);font-weight:400;letter-spacing:.04em;text-transform:uppercase}
-.setblock h4 a{font-family:"Space Mono",monospace;font-size:11px;color:#2b5fb0;text-decoration:none}
-.setblock h4 a:hover{text-decoration:underline}
-.cardgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(66px,1fr));gap:8px}
-.carditem{position:relative;display:block;border-radius:5px;overflow:hidden;line-height:0;box-shadow:0 2px 6px -2px rgba(0,0,0,.4)}
-.carditem img{width:100%;height:auto;display:block;border-radius:5px}
-.carditem .qty{position:absolute;right:3px;bottom:3px;background:rgba(20,23,43,.92);color:var(--gold);font-family:"Space Mono",monospace;font-size:10px;font-weight:700;padding:1px 6px;border-radius:10px;line-height:1.5}
-.loadingcards{font-family:"Space Mono",monospace;font-size:12px;color:var(--soft);padding:6px 0}
-.fallback{font-family:"Space Mono",monospace;font-size:12px}
-.fallback a{color:#2b5fb0;word-break:break-all}
-.collmeta{font-family:"Space Mono",monospace;font-size:12px;color:var(--soft);margin:4px 0 12px;letter-spacing:.03em}
-.collmeta b{color:var(--ink)}
-
-/* card-pool export buttons */
-.poolbtns{display:flex;gap:8px;margin:2px 0 14px;flex-wrap:wrap}
-.poolbtn{font-family:"Space Mono",monospace;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#2b3a66;background:#fff;border:1px solid var(--paper-line);border-radius:7px;padding:6px 12px;cursor:pointer}
-.poolbtn:hover{background:#f3ecd8;border-color:#c9b784}
-.poolbtn:active{transform:translateY(1px)}
-
-/* secret / wheel of fate */
-.wip{display:inline-block;font-family:"Space Mono",monospace;background:var(--red);color:#fff;padding:3px 11px;border-radius:20px;font-size:12px;letter-spacing:.14em;margin-left:12px;vertical-align:middle}
-.gate{max-width:420px;margin:20px auto;background:var(--paper);color:var(--ink);border-radius:12px;padding:28px;box-shadow:var(--shadow);text-align:center}
-.gate h3{font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:20px;margin:0 0 6px;color:var(--ink)}
-.gate input{width:100%;padding:11px 14px;border:1px solid var(--paper-line);border-radius:8px;font-family:"Space Mono",monospace;font-size:15px;background:#fff;color:var(--ink);margin-top:6px}
-.wheelwrap{position:relative;width:min(92vw,460px);margin:8px auto 0}
-#wheel{width:100%;height:auto;display:block;transition:transform 4.6s cubic-bezier(.15,.62,.12,1);transform-origin:50% 50%}
-.pointer{position:absolute;top:-4px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:15px solid transparent;border-right:15px solid transparent;border-top:26px solid var(--gold);filter:drop-shadow(0 2px 3px rgba(0,0,0,.55));z-index:2}
-.spinbtn{display:block;margin:24px auto 0;font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:19px;letter-spacing:.04em;color:#14172B;background:var(--gold);border:none;border-radius:12px;padding:13px 40px;cursor:pointer;box-shadow:var(--shadow)}
-.spinbtn:disabled{opacity:.5;cursor:default}
-.result{max-width:560px;margin:22px auto 0;background:var(--paper);color:var(--ink);border-radius:12px;padding:20px 24px;box-shadow:var(--shadow);text-align:center}
-.result .rlabel{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:22px;color:var(--red)}
-.wlegend{max-width:640px;margin:26px auto 0}
-.wlegend .wrow{display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid rgba(244,236,216,.1);color:#D9D2BE}
-.wlegend .sw{width:15px;height:15px;border-radius:4px;flex:none}
-.wlegend .wpct{margin-left:auto;font-family:"Space Mono",monospace;color:var(--soft-2)}
-
 </style>
 </head>
 <body><nav class="topnav"><div class="inner">
   <a class="brand" href="index.html">Progression League</a>
-  <div class="navlinks"><a href="index.html" class="active">Rulebook</a><a href="standings.html">Standings</a><a href="pools.html">Card Pools</a><a href="secret.html">Secret</a></div>
+  <div class="navlinks"><a href="index.html" class="active">Rulebook</a><a href="standings.html">Standings</a><a href="schedule.html">Schedule</a><a href="pools.html">Card Pools</a><a href="deckbuilder.html">Deck Builder</a></div>
 </div></nav>
 <div class="wrap">
   <header class="hero">
@@ -270,20 +218,20 @@ footer p{margin:6px 0}
     <p class="subtitle">Open the past, one set at a time.</p>
     <p class="thesis">Start at Base Set, 1999. Open packs, build from what you pull, and battle. Then add the next set chronologically, edit your deck, and battle again &mdash; watching your collection and your deck evolve across the eras.</p>
     <div class="glance">
-      <div><div class="k">Trainers</div><div class="v">5+ <small>players</small></div></div>
+      <div><div class="k">Trainers</div><div class="v">9 <small>players</small></div></div>
       <div><div class="k">Packs / Set</div><div class="v">18 <small>each</small></div></div>
       <div><div class="k">Sets</div><div class="v">127 <small>+25 special</small></div></div>
-      <div><div class="k">Arena</div><div class="v">TTS <small>tabletop sim</small></div></div>
+      <div><div class="k">Arena</div><div class="v">TCG ONE <small>browser sim</small></div></div>
     </div>
   </header>
 
   <section id="loop">
     <div class="sec-head"><span class="sec-no">01</span><h2>The Loop</h2></div>
     <div class="loop">
-      <div class="step"><div class="n">STEP 01</div><h3>Crack the set</h3><p>Everyone opens the same 18 packs of the newest set in the sim &mdash; ideally live together.</p></div>
+      <div class="step"><div class="n">STEP 01</div><h3>Rip the set</h3><p>Everyone opens the same 18 packs of the newest set in the sim &mdash; ideally live together.</p></div>
       <div class="step"><div class="n">STEP 02</div><h3>Grow your pool</h3><p>Add every card you pulled to your personal cumulative collection, and log it on the Card Pools page. It only ever grows.</p></div>
       <div class="step"><div class="n">STEP 03</div><h3>Rebuild the deck</h3><p>Construct a fresh 60-card deck from your <em>entire</em> pool, not just the new set. Full rebuilds allowed every session.</p></div>
-      <div class="step"><div class="n">STEP 04</div><h3>Battle</h3><p>Run the night's Swiss rounds in TTS. Log results to the Standings board, then queue up the next set.</p></div>
+      <div class="step"><div class="n">STEP 04</div><h3>Battle</h3><p>Run the night's Swiss rounds in TCG ONE. Add match scores to the Rotation sheet, then queue up the next set.</p></div>
     </div>
   </section>
 
@@ -292,7 +240,7 @@ footer p{margin:6px 0}
     <div class="golden">
       <p class="tag">Read this one first</p>
       <h3>Basic Energy is free. Special Energy is pulled.</h3>
-      <p>A 60-card deck needs 12&ndash;20 Energy. If you could only run the Energy you opened, decks would be unplayable for the first month. So basic Energy sits outside the pool entirely &mdash; and in TTS you just spawn it from the card database. Everything else you play must come from cards you actually pulled.</p>
+      <p>A 60-card deck needs 12&ndash;20 Energy. If you could only run the Energy you opened, decks would be unplayable for the first month. So basic Energy sits outside the pool entirely and can be added freely in the TCG ONE deck editor. Everything else you play must come from cards you actually pulled.</p>
       <div class="rule-pair">
         <div><div class="yes">// UNLIMITED</div><b>Basic Energy</b><span>Grass, Fire, Water, Lightning, Psychic, Fighting, Metal, Darkness. Add as many as you like.</span></div>
         <div><div class="no">// PULL IT</div><b>Special Energy</b><span>Double Colorless, Rainbow, and any other named Energy count toward your pool like any card.</span></div>
@@ -317,7 +265,7 @@ footer p{margin:6px 0}
         <li><span class="lbl">Basics</span><span class="txt">At least <b>one Basic Pok&eacute;mon</b> &mdash; realistically several. Thin Basic counts mean brutal mulligans.</span></li>
         <li><span class="lbl">Legality</span><span class="txt">Your deck is <b>audited against your logged pulls</b> on the Card Pools page. If a card isn't in your pool, it can't be in your deck.</span></li>
         <li><span class="lbl">Rebuild</span><span class="txt"><b>Full teardown allowed</b> every session from your whole cumulative pool.</span></li>
-        <li><span class="lbl">Bans</span><span class="txt"><b>Start with none.</b> The Commissioner adds restrictions only if something dominates.</span></li>
+        <li><span class="lbl">Bans</span><span class="txt"><b>The Commissioner does not impose restrictions.</b> Any proposed ban is decided by a trainer vote and requires a majority to pass.</span></li>
       </ul>
     </div>
   </section>
@@ -329,8 +277,9 @@ footer p{margin:6px 0}
         <li><span class="lbl">As printed</span><span class="txt">Play cards by their <b>era's text</b> &mdash; in Base&ndash;Neo, Weakness <b>doubles</b> damage (&times;2, not +30) and Trainers have <b>no once-per-turn limit</b>.</span></li>
         <li><span class="lbl">Turn 1</span><span class="txt">House rule: the player going first <b>doesn't draw and can't attack</b> on their first turn.</span></li>
         <li><span class="lbl">Win by</span><span class="txt">Take all <b>6 Prizes</b>, leave the opponent with <b>no Pok&eacute;mon in play</b>, or <b>deck them out</b> at the start of their turn.</span></li>
-        <li><span class="lbl">Match</span><span class="txt"><b>Best of one</b> per Swiss pairing to keep nights moving. Bump to Bo3 for era-championship finals.</span></li>
+        <li><span class="lbl">Match</span><span class="txt"><b>Best of three</b> per Swiss pairing. The first player to win 2 games wins the match.</span></li>
       </ul>
+      <p class="note">Need a gameplay reference? Use the <a href="https://www.pokemon.com/static-assets/content-assets/cms2/pdf/trading-card-game/rulebook/pbl_rulebook_en.pdf" target="_blank" rel="noopener">official Pok&eacute;mon Trading Card Game rulebook (PDF)</a>. League-specific and era-specific rules on this page take precedence where noted.</p>
     </div>
   </section>
 
@@ -472,7 +421,7 @@ footer p{margin:6px 0}
 <div class="trow"><span class="dot"></span><span class="tname">Cosmic Eclipse</span></div>
 </div></details>
 <details class="era">
-<summary><span class="chev"></span><span class="era-name">Sword &amp; Shield Era</span><span class="era-meta">2019 – 2023 · 24 sets</span></summary>
+<summary><span class="chev"></span><span class="era-name">Sword &amp; Shield Era</span><span class="era-meta">2019 – 2023 · 22 sets</span></summary>
 <div class="sets">
 <div class="trow special"><span class="dot"></span><span class="tname">SWSH Black Star Promos</span><span class="badge">Special · 1 pack</span></div>
 <div class="trow"><span class="dot"></span><span class="tname">Sword &amp; Shield</span></div>
@@ -500,7 +449,7 @@ footer p{margin:6px 0}
 <div class="trow"><span class="dot"></span><span class="tname">Crown Zenith</span></div>
 </div></details>
 <details class="era">
-<summary><span class="chev"></span><span class="era-name">Scarlet &amp; Violet Era</span><span class="era-meta">2023 – 2025 · 17 sets</span></summary>
+<summary><span class="chev"></span><span class="era-name">Scarlet &amp; Violet Era</span><span class="era-meta">2023 – 2025 · 19 sets</span></summary>
 <div class="sets">
 <div class="trow special"><span class="dot"></span><span class="tname">Scarlet &amp; Violet Black Star Promos</span><span class="badge">Special · 1 pack</span></div>
 <div class="trow"><span class="dot"></span><span class="tname">Scarlet &amp; Violet</span></div>
@@ -539,36 +488,37 @@ footer p{margin:6px 0}
     <div class="card">
       <h3>Swiss pairings, points that carry</h3>
       <p>With a full table a round-robin is too many games. Each night, pair players by current record (<b>Swiss</b>) and run <b>3 rounds</b> so games stay competitive. Points accumulate across the entire progression into the running <a href="standings.html">Standings board</a>.</p>
-      <p class="note">A <b>win is 3 points, a loss 0</b>. Untimed Pok&eacute;mon effectively never ties, so there's no draw score. Odd turnout? One player takes a <b>bye</b> each round, counted as a win. If you ever play on a clock, break a timed-out game on <b>prizes taken</b>, then a sudden-death prize.</p>
+      <p class="note">Match points reward both winning and taking games: a <b>2&ndash;0 win earns 3</b>, a <b>2&ndash;1 win earns 2</b>, a <b>1&ndash;2 loss earns 1</b>, and a <b>0&ndash;2 loss earns 0</b>. Untimed Pok&eacute;mon effectively never ties, so there is no draw score. Odd turnout? One player takes a <b>bye</b>, worth <b>1.5 points</b>. If you ever play on a clock, break a timed-out game on <b>prizes taken</b>, then a sudden-death prize.</p>
     </div>
     <div class="points">
-      <div class="pt"><div class="big">3</div><div class="lbl">Win</div></div>
-      <div class="pt"><div class="big">0</div><div class="lbl">Loss</div></div>
-      <div class="pt"><div class="big">B</div><div class="lbl">Bye = Win</div></div>
+      <div class="pt"><div class="big">3</div><div class="lbl">2&ndash;0 Victory</div></div>
+      <div class="pt"><div class="big">2</div><div class="lbl">2&ndash;1 Victory</div></div>
+      <div class="pt"><div class="big">1</div><div class="lbl">1&ndash;2 Loss</div></div>
+      <div class="pt"><div class="big">0</div><div class="lbl">0&ndash;2 Loss</div></div>
     </div>
     <div class="card" style="margin-top:16px">
       <h3>Era Championships</h3>
-      <p>At the close of each era on the Season Track, the <b>top two on points play a Bo3 final</b> for that era's title. Reset nothing; points roll onward. Win the most era titles and you take the overall crown when the progression ends.</p>
+      <p>At the close of each era on the Season Track, all nine trainers enter a <b>single-elimination, best-of-three tournament</b>. Current standings determine seeding and matchups. Seeds 8 and 9 play an opening-round match, and the winner advances to face Seed 1 in the quarterfinals. Points reset nothing and continue into the next era. The tournament winner becomes Era Champion and receives a <b>prize to be determined</b>. Win the most era titles and you take the overall crown when the progression ends.</p>
     </div>
   </section>
 
-  <section id="tts">
-    <div class="sec-head"><span class="sec-no">07</span><h2>Tabletop Simulator Setup</h2></div>
-    <div class="card">
+  <section id="tcgone">
+    <div class="sec-head"><span class="sec-no">07</span><h2>TCG ONE Setup</h2></div>
+    <div class="card howto">
       <ol class="flow">
-        <li>In the sim, select the newest set, set quantity to <b>18</b> (plus any <b>Special</b> sets due this session at their pack count), and Auto&nbsp;Open. Then hit <b>Export &rarr; TTS</b>.</li>
-        <li>In Tabletop Simulator, load a maintained Pok&eacute;mon TCG mod &mdash; <b>Pepperoni's table</b> is the actively-updated one with the full card database and a decklist-import tablet.</li>
-        <li>Keep one <b>saved object as your personal collection</b>. Each session, add the packs you just exported to it &mdash; that's your growing pool.</li>
-        <li>Build your <b>60-card deck</b> from your collection, spawning unlimited <b>basic Energy</b> straight from the mod's database.</li>
-        <li>Sit in your player color, set up, and battle. Save your deck as an object so next session you can tweak instead of rebuild from scratch.</li>
+        <li>Open the assigned packs in the <a href="https://pokemoncard.io/pack-sim" target="_blank" rel="noopener">Pok&eacute;monCard.io pack simulator</a>, then choose <b>Share your Pulls &rarr; Copy Link</b>.</li>
+        <li>Send the pull link to the Commissioner. The Commissioner adds it to the league spreadsheet, and the <a href="pools.html">Card Pools</a><a href="deckbuilder.html">Deck Builder</a> page updates automatically.</li>
+        <li>Open the league <a href="deckbuilder.html">Deck Builder</a>, select your trainer, and create a 60-card deck using only cards in your accumulated pool. Basic Energy remains unlimited. Copy the finished list and import it from <a href="https://tcg.one/decks/mine" target="_blank" rel="noopener">TCG ONE&rsquo;s My Decks page</a>.</li>
+        <li>Save your deck in TCG ONE so it can be edited as new sets and new pulls are added throughout the progression.</li>
+        <li>Play each scheduled best-of-three matchup in TCG ONE and report the final game score for the weekly tracker.</li>
       </ol>
-      <p class="note">Lighter alternatives if TTS is fussy for someone: the sim's own on-site <b>Play</b> table, or the browser-based <b>ptcgsim.online</b>.</p>
+      <p class="note">The Card Pools page is the official collection record. TCG ONE provides the deck builder and automated online play; it does not replace the league&rsquo;s pull restrictions.</p>
     </div>
   </section>
 </div>
 <footer><div class="wrap">
   <p class="mono">PROGRESSION LEAGUE · a homebrew Pok&eacute;mon TCG format · v2.0</p>
-  <p>Simulator: <a href="https://pokemoncard.io/pack-sim">pokemoncard.io/pack-sim</a> &nbsp;·&nbsp; Arena: Tabletop Simulator</p>
+  <p>Pack simulator: <a href="https://pokemoncard.io/pack-sim">Pok&eacute;monCard.io</a> &nbsp;·&nbsp; Deck builder &amp; arena: <a href="https://tcg.one/">TCG ONE</a></p>
   <p class="disc">Fan-made house-rules document for private play. Not produced by, endorsed by, or affiliated with Nintendo, The Pok&eacute;mon Company International, or GAME FREAK. All set names and card properties belong to their respective owners.</p>
 </div></footer>
 </body></html>
