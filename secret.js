@@ -1,4 +1,5 @@
 import {DEFAULT_OPTIONS, validateOptions, optionsFromCSV, selectIndex, landingRotation} from './secret-wheel.mjs';
+import {verifyPassword} from './secret-lock.mjs';
 
 const SHEET_ID = '1EfbocEaH9PvIiHBsTHhLjDv0tE6GWs_dkBI17VkGmIs';
 const COLORS = ['#E7B93C', '#85C7DE', '#EBAA92', '#9DBB81', '#C6ABD4', '#E28B85', '#A9B7DD', '#D9C7A2'];
@@ -6,11 +7,30 @@ const $ = id => document.getElementById(id);
 const svgNS = 'http://www.w3.org/2000/svg';
 let options = [], rotation = 0, busy = false, unlocked = false, requestId = 0, controller;
 let finishTimer;
+let checkingPassword = false;
 
 // Deliberately casual, client-side lock. Do not use for authentication or private data.
-$('unlock-form').addEventListener('submit', event => {
+$('unlock-form').addEventListener('submit', async event => {
   event.preventDefault();
-  if ($('password').value !== 'mudkip') {
+  if (checkingPassword || unlocked) return;
+  checkingPassword = true;
+  $('unlock').disabled = true;
+  $('password').disabled = true;
+  $('unlock').textContent = 'Checking…';
+  $('gate-error').textContent = '';
+  let accepted;
+  try {
+    accepted = await verifyPassword($('password').value);
+  } catch {
+    $('gate-error').textContent = 'Could not check the password. Open the HTTPS site in an up-to-date browser and try again.';
+    return;
+  } finally {
+    checkingPassword = false;
+    $('unlock').disabled = false;
+    $('password').disabled = false;
+    $('unlock').textContent = 'Unlock';
+  }
+  if (!accepted) {
     $('gate-error').textContent = 'Not quite! Try the secret password again.';
     $('password').select();
     return;
@@ -21,7 +41,7 @@ $('unlock-form').addEventListener('submit', event => {
   $('gate').hidden = true;
   $('lab').hidden = false;
   $('lock').focus();
-  loadOptions();
+  await loadOptions();
 });
 $('lock').addEventListener('click', () => {
   unlocked = false;

@@ -47,9 +47,13 @@ This is a static GitHub Pages site backed by a Google Sheet.
 
 - Standings and weekly match results are read directly from the spreadsheet.
 - The schedule is grouped automatically by week.
-- A scheduled GitHub Actions workflow processes submitted PokémonCard.io pull links.
+- The Commissioner manually runs the **Build card pools** GitHub Actions workflow to process submitted PokémonCard.io pull links. It has no scheduled or push-triggered runs.
 - Generated card data is cached and published to `data/pools.json`.
+- Card Pools and Deck Builder both use that generated data; removing a trainer from the Standings sheet takes effect there after the data is rebuilt and published.
 - Tournament seeding updates dynamically with the standings.
+- The Standings sheet defines the active roster. Completed results remain credited to active trainers without adding withdrawn opponents back into standings or tournament seeds.
+
+Website publishing is separate from refreshing card-pool data. Changes should be batched, and GitHub Pages should only be built when the Commissioner explicitly authorizes it.
 
 ## Tools
 

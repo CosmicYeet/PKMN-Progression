@@ -343,13 +343,14 @@ async function load(){
     const hd=(rows[0]||[]).map(h=>(h||'').trim()); const ix={}; hd.forEach((h,i)=>ix[h.toLowerCase()]=i);
     const data=rows.slice(1).filter(r=> ix.player!=null && (r[ix.player]||'').trim());
     const stats=new Map(data.map(r=>{const name=(r[ix.player]||'').trim();return[name.toLowerCase(),{name,played:0,won:0,lost:0,pts:0}];}));
-    function getPlayer(name){const key=name.toLowerCase();if(!stats.has(key))stats.set(key,{name,played:0,won:0,lost:0,pts:0});return stats.get(key);}
     rrows.slice(1).forEach(r=>{
       const p1=(r[1]||'').trim(),p2=(r[2]||'').trim(),result=matchResult(r[3],r[4]);
       if(!p1||!p2||!result)return;
-      const a=getPlayer(p1),b=getPlayer(p2);a.played++;b.played++;
-      if(result.p1Won){a.won++;b.lost++;}else{b.won++;a.lost++;}
-      a.pts+=result.p1Pts;b.pts+=result.p2Pts;
+      // Standings is the active roster. Retain active players' historical results
+      // without reintroducing opponents who have left the league.
+      const a=stats.get(p1.toLowerCase()),b=stats.get(p2.toLowerCase());
+      if(a){a.played++;if(result.p1Won)a.won++;else a.lost++;a.pts+=result.p1Pts;}
+      if(b){b.played++;if(result.p1Won)b.lost++;else b.won++;b.pts+=result.p2Pts;}
     });
     const list=[...stats.values()].sort((a,b)=>b.pts-a.pts||b.won-a.won||a.lost-b.lost||a.name.localeCompare(b.name));
     let rank=0,previous=null;

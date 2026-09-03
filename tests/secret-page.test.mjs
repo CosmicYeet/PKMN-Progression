@@ -14,7 +14,7 @@ class Element {
   setAttribute(key, value) { this[key] = value; }
   focus() {} select() {} getBoundingClientRect() { return {}; }
 }
-const source = fs.readFileSync(new URL('../secret.js', import.meta.url), 'utf8').replace(/^import .*;\n/, '');
+const source = fs.readFileSync(new URL('../secret.js', import.meta.url), 'utf8').replace(/^import .*;\n/gm, '');
 const html = fs.readFileSync(new URL('../secret.html', import.meta.url), 'utf8');
 function harness(response, reduced = false) {
   const ids = [...html.matchAll(/id="([^"]+)"/g)].map(match => match[1]);
@@ -23,6 +23,7 @@ function harness(response, reduced = false) {
   const timers = new Map(); let next = 0, fetchCount = 0;
   const context = {
     ...logic,
+    verifyPassword: async value => value === 'test-only-passphrase',
     document: {getElementById: id => { assert.ok(elements[id], 'Missing DOM ID: ' + id); return elements[id]; }, createElement: () => new Element(), createElementNS: () => new Element()},
     setTimeout: (fn, delay) => {timers.set(++next, {fn, delay}); return next;}, clearTimeout: id => timers.delete(id),
     AbortController, Date, Uint32Array,
@@ -32,12 +33,12 @@ function harness(response, reduced = false) {
     fetch: async () => {fetchCount++; if (response instanceof Error) throw response; return {ok:true, text:async () => response};}
   };
   vm.runInNewContext(source, context);
-  return {elements, timers, context, fetchCount: () => fetchCount, settle: async () => {for(let i=0;i<12;i++) await Promise.resolve();}, unlock: () => {elements.password.value='mudkip'; elements['unlock-form'].trigger('submit');}};
+  return {elements, timers, context, fetchCount: () => fetchCount, settle: async () => {for(let i=0;i<16;i++) await Promise.resolve();}, unlock: () => {elements.password.value='test-only-passphrase'; return elements['unlock-form'].trigger('submit');}};
 }
 test('wrong password stays locked; correct password loads the sheet only after unlock', async () => {
   const h = harness('Option,Chance (%),Description\nOne,100,Only effect');
   assert.equal(h.fetchCount(), 0);
-  h.elements.password.value='wrong'; h.elements['unlock-form'].trigger('submit');
+  h.elements.password.value='wrong'; await h.elements['unlock-form'].trigger('submit');
   assert.equal(h.elements.lab.hidden, true);
   assert.match(h.elements['gate-error'].textContent, /Not quite/);
   assert.equal(h.fetchCount(), 0);
@@ -97,4 +98,28 @@ test('reduced motion skips animation; template preserves tab-separated columns',
   await h.elements['copy-template'].trigger('click');
   assert.match(h.context.copied, /^Option\tChance \(%\)\tDescription\n/);
   assert.equal(h.context.copied.split('\n').length, 9);
+});
+
+test('verification errors leave the page locked and allow a retry', async () => {
+  const h = harness(new Error('offline'));
+  h.context.verifyPassword = async () => {throw new Error('API unavailable');};
+  await h.unlock();
+  assert.equal(h.elements.lab.hidden, true);
+  assert.equal(h.elements.unlock.disabled, false);
+  assert.equal(h.elements.password.disabled, false);
+  assert.match(h.elements['gate-error'].textContent, /Could not check/);
+  assert.equal(h.fetchCount(), 0);
+});
+
+test('verification ignores repeat submits while a check is pending', async () => {
+  const h = harness(new Error('offline'));
+  let checks = 0, finish;
+  h.context.verifyPassword = () => {checks++;return new Promise(resolve => {finish=resolve;});};
+  const pending = h.unlock();
+  await h.elements['unlock-form'].trigger('submit');
+  assert.equal(checks, 1);
+  assert.equal(h.elements.unlock.disabled, true);
+  finish(false);await pending;
+  assert.equal(h.elements.unlock.disabled, false);
+  assert.equal(h.elements.lab.hidden, true);
 });
