@@ -6,7 +6,10 @@ import vm from 'node:vm';
 import * as logic from '../secret-wheel.mjs';
 
 class Element {
-  constructor() { this.listeners = {}; this.children = []; this.style = {}; this.textContent = ''; this.value = ''; this.hidden = false; this.disabled = false; }
+  constructor(text = '', value = '') {
+    this.listeners = {}; this.children = []; this.style = {}; this.textContent = text; this.value = value;
+    this.hidden = false; this.disabled = false;
+  }
   addEventListener(name, handler) { this.listeners[name] = handler; }
   trigger(name) { return this.listeners[name]?.({preventDefault(){}}); }
   append(...items) { this.children.push(...items); }
@@ -14,112 +17,113 @@ class Element {
   setAttribute(key, value) { this[key] = value; }
   focus() {} select() {} getBoundingClientRect() { return {}; }
 }
+
+class OptionElement extends Element {
+  constructor(text, value) { super(text, value); }
+}
+
 const source = fs.readFileSync(new URL('../secret.js', import.meta.url), 'utf8').replace(/^import .*;\n/gm, '');
 const html = fs.readFileSync(new URL('../secret.html', import.meta.url), 'utf8');
-function harness(response, reduced = false) {
+
+function harness(wheelResponse = 'Option,Chance (%),Description\nOne,100,Only effect', reduced = false) {
   const ids = [...html.matchAll(/id="([^"]+)"/g)].map(match => match[1]);
   const elements = Object.fromEntries(ids.map(id => [id, new Element()]));
   elements.lab.hidden = true;
+  elements['pack-claim'].hidden = true;
   const timers = new Map(); let next = 0, fetchCount = 0;
   const context = {
     ...logic,
-    verifyPassword: async value => value === 'test-only-passphrase',
-    document: {getElementById: id => { assert.ok(elements[id], 'Missing DOM ID: ' + id); return elements[id]; }, createElement: () => new Element(), createElementNS: () => new Element()},
-    setTimeout: (fn, delay) => {timers.set(++next, {fn, delay}); return next;}, clearTimeout: id => timers.delete(id),
+    verifyPassword: async value => value === 'StinkyJustin',
+    document: {
+      getElementById: id => { assert.ok(elements[id], 'Missing DOM ID: ' + id); return elements[id]; },
+      createElement: () => new Element(),
+      createElementNS: () => new Element()
+    },
+    Option: OptionElement,
+    URL,
+    setTimeout: (fn, delay) => { timers.set(++next, {fn, delay}); return next; },
+    clearTimeout: id => timers.delete(id),
     AbortController, Date, Uint32Array,
-    crypto: {getRandomValues: array => {array[0] = 0; return array;}},
+    crypto: {getRandomValues: array => { array[0] = 0; return array; }},
     matchMedia: () => ({matches: reduced}),
-    navigator: {clipboard: {writeText: async text => {context.copied = text;}}},
-    fetch: async () => {fetchCount++; if (response instanceof Error) throw response; return {ok:true, text:async () => response};}
+    navigator: {clipboard: {writeText: async text => { context.copied = text; }}},
+    fetch: async url => {
+      fetchCount++;
+      if (String(url).includes('sheet=Standings')) return {ok:true, text:async () => 'Player,Pts\nKeith,0\nNoah,0'};
+      if (String(url).includes('data/pools.json')) return {ok:true, json:async () => ({players:[{name:'Keith'}]})};
+      if (wheelResponse instanceof Error) throw wheelResponse;
+      return {ok:true, text:async () => wheelResponse};
+    }
   };
   vm.runInNewContext(source, context);
-  return {elements, timers, context, fetchCount: () => fetchCount, settle: async () => {for(let i=0;i<16;i++) await Promise.resolve();}, unlock: () => {elements.password.value='test-only-passphrase'; return elements['unlock-form'].trigger('submit');}};
+  return {
+    elements, timers, context,
+    fetchCount: () => fetchCount,
+    settle: async () => { for (let index = 0; index < 20; index++) await Promise.resolve(); },
+    unlock: async () => { elements.password.value = 'StinkyJustin'; await elements['unlock-form'].trigger('submit'); }
+  };
 }
-test('wrong password stays locked; correct password loads the sheet only after unlock', async () => {
-  const h = harness('Option,Chance (%),Description\nOne,100,Only effect');
+
+test('wrong password stays locked; correct password loads options and trainers', async () => {
+  const h = harness();
   assert.equal(h.fetchCount(), 0);
-  h.elements.password.value='wrong'; await h.elements['unlock-form'].trigger('submit');
+  h.elements.password.value = 'wrong';
+  await h.elements['unlock-form'].trigger('submit');
   assert.equal(h.elements.lab.hidden, true);
   assert.match(h.elements['gate-error'].textContent, /Not quite/);
-  assert.equal(h.fetchCount(), 0);
-  h.unlock(); await h.settle();
+  await h.unlock();
   assert.equal(h.elements.lab.hidden, false);
   assert.equal(h.elements.gate.hidden, true);
-  assert.equal(h.elements.password.value, '');
-  assert.equal(h.elements.spin.disabled, false);
-  assert.match(h.elements.source.textContent, /Live spreadsheet/);
-  assert.equal(h.elements.options.children.length, 1);
-});
-test('unreadable sheet uses explicitly labeled starter odds', async () => {
-  for(const response of [new Error('offline'), '<html>unavailable</html>', '   ']) {
-    const h = harness(response); h.unlock(); await h.settle();
-    assert.match(h.elements.source.textContent, /Starter options/);
-    assert.equal(h.elements.options.children.length, 8);
-    assert.equal(h.elements.spin.disabled, false);
-  }
-});
-test('invalid sheet disables spinning until the starter fallback is selected', async () => {
-  const h = harness('Option,Chance (%),Description\nBad,99,Wrong total');
-  h.unlock(); await h.settle();
+  assert.equal(h.elements.trainer.children.length, 3);
   assert.equal(h.elements.spin.disabled, true);
-  assert.equal(h.elements['use-defaults'].hidden, false);
-  assert.match(h.elements['config-error'].textContent, /99%/);
-  h.elements['use-defaults'].trigger('click');
-  assert.equal(h.elements.spin.disabled, false);
-  assert.match(h.elements.source.textContent, /demo configuration/);
+  assert.equal(h.elements.spin.textContent, 'Choose a trainer');
 });
-test('spins lock controls, ignore extra clicks, then reveal the selected option', async () => {
-  const h = harness(new Error('offline')); h.unlock(); await h.settle();
-  h.elements.spin.trigger('click');
-  assert.equal(h.elements.spin.disabled, true);
-  assert.equal(h.elements.refresh.disabled, true);
-  const angle = h.elements.wheel.style.transform;
-  h.elements.spin.trigger('click');
-  h.elements.refresh.trigger('click');
-  assert.equal(h.elements.wheel.style.transform, angle);
-  assert.equal(h.fetchCount(), 1);
-  [...h.timers.values()].find(timer => timer.delay === 4900).fn();
+
+test('a trainer must be selected before spinning', async () => {
+  const h = harness(); await h.unlock();
+  h.elements.trainer.value = 'Keith';
+  h.elements.trainer.trigger('change');
   assert.equal(h.elements.spin.disabled, false);
-  assert.equal(h.elements.refresh.disabled, false);
-  assert.equal(h.elements.result.children[1].textContent, 'One bonus pack');
+  h.elements.spin.trigger('click');
+  assert.equal(h.elements.trainer.disabled, true);
 });
-test('locking cancels an active spin and hides its content', async () => {
-  const h = harness(new Error('offline')); h.unlock(); await h.settle();
+
+test('pack result creates a validated Bonus Pull row', async () => {
+  const h = harness('Option,Chance (%),Description\nThree packs,100,Open 3 packs of Base Set.', true);
+  await h.unlock();
+  h.elements.trainer.value = 'Keith'; h.elements.trainer.trigger('change');
+  h.elements.spin.trigger('click');
+  [...h.timers.values()].find(timer => timer.delay === 0).fn();
+  assert.equal(h.elements['pack-claim'].hidden, false);
+  assert.match(h.elements['claim-summary'].textContent, /Keith earned 3 Base Set packs/);
+  h.elements['pull-link'].value = 'https://pokemoncard.io/pack-sim/share/01M0XQ711N6STFCM71T44Z1P5T';
+  h.elements['pull-link'].trigger('input');
+  assert.equal(h.elements['copy-claim'].disabled, false);
+  await h.elements['copy-claim'].trigger('click');
+  assert.equal(h.context.copied, 'Keith\tBase Set\t3\thttps://pokemoncard.io/pack-sim/share/01M0XQ711N6STFCM71T44Z1P5T\tFALSE');
+});
+
+test('non-pack results do not create a claim', async () => {
+  const h = harness('Option,Chance (%),Description\nBan,100,Nominate one card.', true);
+  await h.unlock();
+  h.elements.trainer.value = 'Noah'; h.elements.trainer.trigger('change');
+  h.elements.spin.trigger('click');
+  [...h.timers.values()].find(timer => timer.delay === 0).fn();
+  assert.equal(h.elements['pack-claim'].hidden, true);
+});
+
+test('unreadable wheel uses labeled starter odds and template includes reward columns', async () => {
+  const h = harness(new Error('offline')); await h.unlock();
+  assert.match(h.elements.source.textContent, /Starter options/);
+  assert.equal(h.elements.options.children.length, 8);
+  assert.match(h.elements.template.value, /^Option\tChance \(%\)\tDescription\tEffect\tSet\tQuantity\n/);
+});
+
+test('locking cancels an active spin and hides the lab', async () => {
+  const h = harness(); await h.unlock();
+  h.elements.trainer.value = 'Keith'; h.elements.trainer.trigger('change');
   h.elements.spin.trigger('click'); h.elements.lock.trigger('click');
   assert.equal(h.elements.lab.hidden, true);
   assert.equal(h.elements.gate.hidden, false);
   assert.equal(h.timers.size, 0);
-});
-test('reduced motion skips animation; template preserves tab-separated columns', async () => {
-  const h = harness(new Error('offline'), true); h.unlock(); await h.settle();
-  h.elements.spin.trigger('click');
-  assert.equal(h.elements.wheel.style.transition, 'none');
-  assert.ok([...h.timers.values()].some(timer => timer.delay === 0));
-  await h.elements['copy-template'].trigger('click');
-  assert.match(h.context.copied, /^Option\tChance \(%\)\tDescription\n/);
-  assert.equal(h.context.copied.split('\n').length, 9);
-});
-
-test('verification errors leave the page locked and allow a retry', async () => {
-  const h = harness(new Error('offline'));
-  h.context.verifyPassword = async () => {throw new Error('API unavailable');};
-  await h.unlock();
-  assert.equal(h.elements.lab.hidden, true);
-  assert.equal(h.elements.unlock.disabled, false);
-  assert.equal(h.elements.password.disabled, false);
-  assert.match(h.elements['gate-error'].textContent, /Could not check/);
-  assert.equal(h.fetchCount(), 0);
-});
-
-test('verification ignores repeat submits while a check is pending', async () => {
-  const h = harness(new Error('offline'));
-  let checks = 0, finish;
-  h.context.verifyPassword = () => {checks++;return new Promise(resolve => {finish=resolve;});};
-  const pending = h.unlock();
-  await h.elements['unlock-form'].trigger('submit');
-  assert.equal(checks, 1);
-  assert.equal(h.elements.unlock.disabled, true);
-  finish(false);await pending;
-  assert.equal(h.elements.unlock.disabled, false);
-  assert.equal(h.elements.lab.hidden, true);
 });

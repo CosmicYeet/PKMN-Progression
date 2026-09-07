@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {DEFAULT_OPTIONS, validateOptions, parseCSV, optionsFromCSV, selectIndex, landingRotation} from '../secret-wheel.mjs';
+import {DEFAULT_OPTIONS, validateOptions, parseCSV, optionsFromCSV, playersFromCSV, selectIndex, landingRotation} from '../secret-wheel.mjs';
 
 test('starter percentages sum to 100', () => {
   assert.equal(validateOptions(DEFAULT_OPTIONS).length, 8);
@@ -15,6 +15,17 @@ test('CSV handles quotes, commas, multiline, CRLF and accented names', () => {
 test('sheet numbers and percent formatting work; zero disables', () => {
   const result = optionsFromCSV('Option,Chance (%),Description\nA,25%,First\nB,75,Second\nC,0,Disabled\n,,');
   assert.deepEqual(result.map(o => o.chance), [25,75]);
+});
+test('pack rewards support explicit columns and legacy description inference', () => {
+  const explicit = optionsFromCSV('Option,Chance (%),Description,Effect,Set,Quantity\nPrize,100,A mystery reward,packs,Neo Genesis,3');
+  assert.deepEqual(explicit[0].reward, {type:'packs', set:'Neo Genesis', quantity:3});
+  const inferred = optionsFromCSV('Option,Chance (%),Description\nPrize,100,Open 2 packs of Jungle.');
+  assert.deepEqual(inferred[0].reward, {type:'packs', set:'Jungle', quantity:2});
+  assert.throws(() => optionsFromCSV('Option,Chance (%),Description,Effect,Set,Quantity\nPrize,100,Reward,packs,Base Set,1.5'), /whole number/);
+});
+test('trainer names come from the Player column and are deduplicated', () => {
+  assert.deepEqual(playersFromCSV('Pts,Player\n0,Keith\n0,Noah\n0,keith\n0,'), ['Keith','Noah']);
+  assert.throws(() => playersFromCSV('Name,Pts\nKeith,0'), /Player column/);
 });
 test('invalid configurations fail closed', () => {
   for (const text of [
