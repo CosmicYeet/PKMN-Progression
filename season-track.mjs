@@ -43,23 +43,31 @@ export function findCurrentSetIndex(setNames, currentSet) {
   return setNames.findIndex(name => normalizeSetName(name) === wanted);
 }
 
+export function activeSetNames(currentSet) {
+  return normalizeSetName(currentSet) === 'team rocket' ? ['Base Set 2', 'Team Rocket'] : [currentSet];
+}
+
 export function highlightCurrentSet(root, currentSet) {
   const rows = [...root.querySelectorAll('.trow')];
   for (const row of rows) {
     row.classList.remove('kick');
     row.querySelector('.kickbadge')?.remove();
   }
-  const index = findCurrentSetIndex(rows.map(row => row.querySelector('.tname')?.textContent || ''), currentSet);
-  if (index < 0) return false;
+  const rowNames = rows.map(row => row.querySelector('.tname')?.textContent || '');
+  const activeNames = activeSetNames(currentSet);
+  const indices = activeNames.map(name => findCurrentSetIndex(rowNames, name));
+  if (indices.some(index => index < 0)) return false;
 
-  const row = rows[index];
-  row.classList.add('kick');
-  const badge = document.createElement('span');
-  badge.className = 'badge kickbadge';
-  badge.textContent = 'Current set';
-  row.append(badge);
-  const era = row.closest('details.era');
-  if (era) era.open = true;
+  for (const index of indices) {
+    const row = rows[index];
+    row.classList.add('kick');
+    const badge = document.createElement('span');
+    badge.className = 'badge kickbadge';
+    badge.textContent = 'Current set';
+    row.append(badge);
+    const era = row.closest('details.era');
+    if (era) era.open = true;
+  }
   return true;
 }
 
@@ -105,7 +113,8 @@ async function initializeSeasonTrack() {
     status.classList.add('error');
     return;
   }
-  status.replaceChildren('Current set: ', Object.assign(document.createElement('strong'), {textContent: currentSet}), ` · ${source}`);
+  const activeNames = activeSetNames(currentSet);
+  status.replaceChildren(activeNames.length > 1 ? 'Current sets: ' : 'Current set: ', Object.assign(document.createElement('strong'), {textContent: activeNames.join(' + ')}), ` · ${source}`);
 }
 
 if (typeof document !== 'undefined') initializeSeasonTrack();

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {parseCSV, currentSetFromSettingsCSV, normalizeSetName, findCurrentSetIndex} from '../season-track.mjs';
+import {activeSetNames, parseCSV, currentSetFromSettingsCSV, normalizeSetName, findCurrentSetIndex} from '../season-track.mjs';
 
 test('Settings CSV finds the Current Set field regardless of row order or case', () => {
   const csv = 'Setting,Value\r\nPack Count,24\r\nCURRENT SET,"Neo Genesis"\r\n';
@@ -20,4 +20,9 @@ test('set matching tolerates accents, punctuation, ampersands, and dash variants
 
 test('missing Current Set fails clearly instead of highlighting stale data', () => {
   assert.throws(() => currentSetFromSettingsCSV('Setting,Value\nPack Count,24'), /Current Set/);
+});
+
+test('Team Rocket activates the combined Base Set 2 and Team Rocket release', () => {
+  assert.deepEqual(activeSetNames('Team Rocket'), ['Base Set 2','Team Rocket']);
+  assert.deepEqual(activeSetNames('Fossil'), ['Fossil']);
 });
